@@ -1,0 +1,15 @@
+[
+  {
+    "BranchCode": "PL34",
+    "BranchName": "JACKS ADVENTURE",
+    "location": "ILOCOS NORTE",
+    "equipment": "Control box",
+    "task": "Insulation resistance Test",
+    "status": "Repaired",
+    "date": "2025-12-08",
+    "performedBy": "RONIL JARDIO",
+    "verifiedBy": "OLIVER RYAN CO",
+    "nextDue": "2025-12-16",
+    "notes": "PARTS ALREADY REPLACED"
+  }
+]

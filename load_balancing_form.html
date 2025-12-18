@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>Load Balancing & Full Load Test - 3-Phase</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--accent:#0b78d1;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background: var(--bg) url('images/tw_bg.png') no-repeat center top/cover;background-attachment:fixed;color:#111}
+    .wrap{max-width:1100px;margin:20px auto;padding:16px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    header h1{font-size:20px;margin:0}
+    .back-home-btn{position:fixed;top:20px;right:20px;z-index:1000;background:var(--accent);color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;font-weight:600}
+    .back-home-btn:hover{background:#0a6bbf;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:16px}
+    .card{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+    label{display:block;font-size:13px;margin-top:10px;color:var(--muted)}
+    input[type=text],input[type=number],select,textarea{width:100%;padding:8px;border:1px solid #e6e9ee;border-radius:6px}
+    .small{width:120px;display:inline-block}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px;border-bottom:1px solid #eef1f4;text-align:left;font-size:13px}
+    th{background:#fbfdff;position:sticky;top:0}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    button{background:var(--accent);color:#fff;border:0;padding:8px 10px;border-radius:6px;cursor:pointer}
+    button.ghost{background:#fff;color:var(--accent);border:1px solid rgba(11,120,209,0.12)}
+    .muted{color:var(--muted);font-size:13px}
+    .bars{display:flex;gap:8px;align-items:end;height:120px;padding:12px;border-radius:6px;background:#f8fbff;margin-top:8px}
+    .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px;border-radius:6px}
+    .bar .fill{width:60%;background:linear-gradient(180deg,var(--accent),#0b78d1);border-radius:6px}
+    .label{font-size:13px;margin-top:8px}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 10px;border-radius:8px;background:#fff;cursor:pointer;border:1px solid transparent}
+    .tab.active{background:linear-gradient(180deg,#eef8ff,#e6f3ff);border-color:rgba(11,120,209,0.12)}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}	@media (max-width:768px){
+		.wrap{margin:10px auto;padding:10px}
+		header h1{font-size:16px}
+		.back-home-btn{top:10px;right:10px;padding:8px 12px;font-size:11px}
+		.card{padding:10px}
+		label{font-size:12px;margin-top:8px}
+		input[type=text],input[type=number],select,textarea{padding:6px;font-size:12px}
+		button{padding:6px 8px;font-size:12px}
+		table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:11px}
+		th,td{padding:6px;font-size:11px;white-space:nowrap}
+		.bars{height:100px;padding:8px}
+		.bar .fill{width:50%}
+		.label{font-size:11px}
+		.tabs{gap:6px}
+		.tab{padding:6px 8px;font-size:12px}
+	}
+	@media (max-width:600px){
+		#branch-code,#company-name,#location-name{margin-bottom:6px}
+		div[style*="display:flex"]{flex-direction:column!important}
+		div[style*="width:"]{width:100%!important}
+		.small{width:100%!important}
+	}  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+  <button class="back-home-btn" onclick="window.location.href='index.html'">← Back to Home Page</button>
+  
+  <div class="wrap">
+    <header>
+      <h1>Load Balancing & Full Load Test</h1>
+      <div class="muted">File: <code>load_balancing_form.html</code></div>
+    </header>
+
+    <div class="tabs">
+      <div class="tab active" id="tab-balance">Load Balancing</div>
+      <div class="tab" id="tab-fulltest">Full Load Test</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="branch-code" type="text" placeholder="Branch Code" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />  
+      <input id="company-name" type="text" placeholder="Company name" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
+      <input id="location-name" type="text" placeholder="Location" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
+    </div>
+
+    <div class="grid">
+      <!-- Main column -->
+      <main class="card">
+        <!-- Circuit selector -->
+        <label for="circuit-type"><strong>Circuit Type</strong></label>
+        <select id="circuit-type">
+          <option value="single_ln">Single Phase (Line-to-Neutral)</option>
+          <option value="single_llc">Single Phase (Line-to-Line / Combined Phase)</option>
+          <option value="single_ll">Single Phase (Line-to-Line / Split Phase)</option>
+          <option value="three_wye">Three Phase (Wye / Line-to-Neutral)</option>
+          <option value="three_delta">Three Phase (Delta / Line-to-Line)</option>
+        </select>
+
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:end">
+          <div style="width:180px">
+            <label for="v-line-line">Line-to-Line Voltage (V)</label>
+            <input id="v-line-line" type="number" step="0.1" placeholder="V LL" />
+          </div>
+          <div style="width:180px">
+            <label for="v-line-neutral">Line-to-Neutral Voltage (V)</label>
+            <input id="v-line-neutral" type="number" step="0.1" placeholder="V LN" />
+          </div>
+          <div style="width:140px">
+            <label for="v-phase">Phase Voltage (V)</label>
+            <input id="v-phase" type="number" step="0.1" placeholder="V ph" />
+          </div>
+        </div>
+
+        <!-- Load Balancing Form -->
+        <section id="balance-section">
+          <h2 style="margin-top:12px">Add Circuit Load</h2>
+          <div style="display:flex;gap:8px;align-items:end;margin-bottom:8px">
+            <div style="width:220px">
+              <label for="mcb-capacity">Main Circuit Breaker Capacity (A)</label>
+              <input id="mcb-capacity" type="number" step="1" placeholder="A" />
+            </div>
+            <div style="width:180px">
+              <label for="main-voltage">Main Voltage (V)</label>
+              <input id="main-voltage" type="number" step="0.1" placeholder="V" />
+            </div>
+            <div style="flex:1">
+              <label for="wire-size">Size & types of Wires</label>
+              <input id="wire-size" type="text" placeholder="e.g. 3x2.5mm2 Cu" />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:end;margin-bottom:8px">
+            <div style="flex:1">
+              <label for="lb-name">Load name</label>
+              <input id="lb-name" type="text" placeholder="Circuit number or description e.g. #1" />
+            </div>
+            <div style="width:140px">
+              <label for="lb-value">Load (A)</label>
+              <input id="lb-value" type="number" step="0.01" placeholder="A" />
+            </div>
+            <div style="width:140px">
+              <label for="lb-phase">Phase / Side</label>
+              <select id="lb-phase"></select>
+            </div>
+            <div style="width:120px">
+              <button id="lb-add">Add</button>
+            </div>
+          </div>
+
+          <div class="toolbar" style="margin-top:8px">
+            <button id="lb-clear" class="ghost">Clear Loads</button>
+            <button id="lb-export" class="ghost">Export CSV</button>
+            <button id="lb-import" class="ghost">Import CSV</button>
+            <button id="print-form" class="ghost">Printable Form</button>
+          </div>
+
+          <h3 style="margin-top:12px">Loads</h3>
+          <div style="max-height:260px;overflow:auto;border-radius:6px">
+            <table aria-describedby="loads-count">
+              <thead><tr><th>Load</th><th>A</th><th>Phase</th><th></th></tr></thead>
+              <tbody id="lb-body"></tbody>
+            </table>
+          </div>
+          <div id="loads-count" class="muted" style="margin-top:8px">0 loads</div>
+
+        </section>
+
+        <!-- Full Load Test Form -->
+        <section id="fulltest-section" style="display:none">
+          <h2 style="margin-top:12px">Full Load Test</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <label for="nameplate-power">Nameplate Full Load Power (kW)</label>
+              <input id="nameplate-power" type="number" step="0.1" placeholder="Total kW at full load" />
+
+              <label for="meas-van">Measured Voltages</label>
+              <div style="display:flex;gap:8px">
+                <input id="meas-van" type="number" step="0.1" placeholder="V AN" />
+                <input id="meas-vbn" type="number" step="0.1" placeholder="V BN" />
+                <input id="meas-vcn" type="number" step="0.1" placeholder="V CN" />
+              </div>
+
+              <label for="meas-ia">Measured Currents (A)</label>
+              <div style="display:flex;gap:8px">
+                <input id="meas-ia" type="number" step="0.1" placeholder="I A" />
+                <input id="meas-ib" type="number" step="0.1" placeholder="I B" />
+                <input id="meas-ic" type="number" step="0.1" placeholder="I C" />
+              </div>
+
+              <label for="meas-pf">Power Factors</label>
+              <div style="display:flex;gap:8px">
+                <input id="pf-a" type="number" step="0.01" placeholder="PF A (0-1)" />
+                <input id="pf-b" type="number" step="0.01" placeholder="PF B" />
+                <input id="pf-c" type="number" step="0.01" placeholder="PF C" />
+              </div>
+
+              <div class="toolbar"><button id="run-test">Compute</button><button id="reset-test" class="ghost">Reset</button></div>
+            </div>
+
+            <div>
+              <h3>Test Results</h3>
+              <div class="muted">Results will show per-phase and total power, and % of nameplate full load.</div>
+              <div style="margin-top:8px">
+                <div><strong>Phase A:</strong> <span id="res-pa">0 kW</span></div>
+                <div><strong>Phase B:</strong> <span id="res-pb">0 kW</span></div>
+                <div><strong>Phase C:</strong> <span id="res-pc">0 kW</span></div>
+                <div style="margin-top:6px"><strong>Total:</strong> <span id="res-total">0 kW</span></div>
+                <div><strong>% of Nameplate:</strong> <span id="res-pct">0 %</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Side column: summary and suggestions -->
+      <aside class="card">
+        <h2 style="margin-top:0">Summary</h2>
+        <div class="bars" aria-hidden="false">
+              <div class="bar"><div id="barA" class="fill" style="height:8%"></div><div class="label">A: <span id="sumA">0</span> A</div></div>
+              <div class="bar"><div id="barB" class="fill" style="height:8%"></div><div class="label">B: <span id="sumB">0</span> A</div></div>
+              <div class="bar"><div id="barC" class="fill" style="height:8%"></div><div class="label">C: <span id="sumC">0</span> A</div></div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div><strong>Total:</strong> <span id="sumTotal">0 A</span></div>
+          <div><strong>Average per Phase:</strong> <span id="sumAvg">0 A</span></div>
+          <div><strong>Imbalance:</strong> <span id="sumImb">0 %</span></div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label for="remarks-input"><strong>Remarks</strong></label>
+          <textarea id="remarks-input" rows="3" placeholder="Enter remarks..." style="width:100%;padding:8px;border:1px solid #e6e9ee;border-radius:6px;margin-top:6px"></textarea>
+        </div>
+
+        <h3 style="margin-top:12px">Suggestions</h3>
+        <div id="suggestions">Add loads to see suggestions to rebalance phases.</div>
+        <div class="toolbar" style="margin-top:12px">
+          <button id="apply-suggestion" class="ghost">Apply First Suggestion</button>
+          <button id="export-full" class="ghost">Export Report</button>
+        </div>
+      </aside>
+
+    </div>
+
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <input id="panel-board" type="text" placeholder="Panel Board Name" style="width:360px;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
+      <div class="muted" style="font-size:13px">Panel appears on printable form</div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:12px;align-items:center">
+      <label style="width:220px;font-size:13px;">Load Balancing Conducted by:</label>
+      <input id="conducted-by" type="text" placeholder="Electrician name" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
+      <label style="width:220px;font-size:13px;">Witnessed and Verified by:</label>
+      <input id="witness-by" type="text" placeholder="Operation In-charge" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
+    </div>
+
+    <input id="file-input" type="file" accept="text/csv" style="display:none" />
+  </div>
+
+  <script>
+    // Simple client-side load balancer + full load test
+    const STORAGE_KEY = 'epm_load_balancer_form_v1';
+    let loads = [];
+
+    // DOM refs
+    const circuitTypeEl = document.getElementById('circuit-type');
+    const phaseSelect = document.getElementById('lb-phase');
+    const lbBody = document.getElementById('lb-body');
+    const loadsCount = document.getElementById('loads-count');
+
+    // tabs
+    const tabBalance = document.getElementById('tab-balance');
+    const tabFull = document.getElementById('tab-fulltest');
+    const balanceSection = document.getElementById('balance-section');
+    const fulltestSection = document.getElementById('fulltest-section');
+
+    // load test refs
+    const runTestBtn = document.getElementById('run-test');
+
+    // initialize
+    function init(){
+      bindCircuitOptions();
+      loads = loadFromStorage();
+      renderLoads();
+      computeSummary();
+      attachEvents();
+      // load saved header meta
+      try{
+          const metaRaw = localStorage.getItem('lb_form_meta');
+            if(metaRaw){
+              const meta = JSON.parse(metaRaw);
+              if(meta.company) document.getElementById('company-name').value = meta.company;
+              if(meta.location) document.getElementById('location-name').value = meta.location;
+              if(meta.panel) document.getElementById('panel-board').value = meta.panel;
+              if(meta.branch) document.getElementById('branch-code').value = meta.branch;
+              if(meta.mcb) document.getElementById('mcb-capacity').value = meta.mcb;
+              if(meta.mainV) document.getElementById('main-voltage').value = meta.mainV;
+              if(meta.wires) document.getElementById('wire-size').value = meta.wires;
+              if(meta.conducted) document.getElementById('conducted-by').value = meta.conducted;
+              if(meta.witness) document.getElementById('witness-by').value = meta.witness;
+              if(meta.remarks) document.getElementById('remarks-input').value = meta.remarks;
+              if(meta.vll) document.getElementById('v-line-line').value = meta.vll;
+              if(meta.vln) document.getElementById('v-line-neutral').value = meta.vln;
+              if(meta.vph) document.getElementById('v-phase').value = meta.vph;
+            }
+      }catch(e){console.warn('Failed to load header meta', e);}    
+    }
+
+    function bindCircuitOptions(){ 
+      updatePhaseOptions(); 
+      applyVoltageFieldRules();
+      circuitTypeEl.addEventListener('change', ()=>{ 
+        updatePhaseOptions(); 
+        applyVoltageFieldRules();
+        renderLoads(); 
+        computeSummary(); 
+      }); 
+    }
+
+    function applyVoltageFieldRules(){
+      const vLL = document.getElementById('v-line-line');
+      const vLN = document.getElementById('v-line-neutral');
+      const vPh = document.getElementById('v-phase');
+      const circType = circuitTypeEl.value;
+
+      // Reset all fields first
+      [vLL, vLN, vPh].forEach(field => {
+        if(field){
+          field.disabled = false;
+          field.style.background = '';
+        }
+      });
+
+      // Apply rules based on circuit type
+      if(circType === 'single_ln'){
+        // Single Phase (Line-to-Neutral): disable Line-to-Line and Phase Voltage
+        if(vLL){ vLL.disabled = true; vLL.style.background = '#e0e0e0'; vLL.value = ''; }
+        if(vPh){ vPh.disabled = true; vPh.style.background = '#e0e0e0'; vPh.value = ''; }
+      } else if(circType === 'single_llc'){
+        // Single Phase (Line-to-Line / Combined Phase): disable Line-to-Neutral and Phase Voltage
+        if(vLN){ vLN.disabled = true; vLN.style.background = '#e0e0e0'; vLN.value = ''; }
+        if(vPh){ vPh.disabled = true; vPh.style.background = '#e0e0e0'; vPh.value = ''; }
+      } else if(circType === 'single_ll'){
+        // Single Phase (Line-to-Line / Split Phase): disable Line-to-Neutral and Line-to-Line
+        if(vLN){ vLN.disabled = true; vLN.style.background = '#e0e0e0'; vLN.value = ''; }
+        if(vLL){ vLL.disabled = true; vLL.style.background = '#e0e0e0'; vLL.value = ''; }
+      } else if(circType === 'three_wye'){
+        // Three Phase (Wye / Line-to-Neutral): enable all fields
+        // Already reset above, no additional action needed
+      } else if(circType === 'three_delta'){
+        // Three Phase (Delta / Line-to-Line): disable Line-to-Neutral
+        if(vLN){ vLN.disabled = true; vLN.style.background = '#e0e0e0'; vLN.value = ''; }
+      }
+    }
+
+    function updatePhaseOptions(){
+      const t = circuitTypeEl.value; phaseSelect.innerHTML = '';
+      if(t==='single_ln'){ ['L1_N'].forEach(x=> addPhaseOption(x)); }
+      else if(t==='single_llc'){ ['L12'].forEach(x=> addPhaseOption(x)); }  
+      else if(t==='single_ll'){ ['L1','L2'].forEach(x=> addPhaseOption(x)); }
+      else if(t==='three_wye'){ ['AN','BN','CN','N'].forEach(x=> addPhaseOption(x)); }
+      else if(t==='three_delta'){ ['AB','BC','CA'].forEach(x=> addPhaseOption(x)); }
+    }
+    function addPhaseOption(val){ const o = document.createElement('option'); o.value = val; o.textContent = val; phaseSelect.appendChild(o); }
+
+    function loadFromStorage(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }catch(e){console.error(e); return []; } }
+    function saveToStorage(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(loads)); }catch(e){console.error(e);} }
+
+    function renderLoads(){ lbBody.innerHTML = ''; loads.forEach((l,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHTML(l.name)}</td><td>${Number(l.value).toFixed(2)}</td><td>${l.phase}</td><td><button data-i="${i}">Delete</button></td>`;
+      lbBody.appendChild(tr);
+      tr.querySelector('button').addEventListener('click', ()=>{ loads.splice(i,1); saveToStorage(); renderLoads(); computeSummary(); });
+    });
+      loadsCount.textContent = `${loads.length} loads`;
+    }
+
+    function escapeHTML(s){ return String(s||'').replace(/[&<>\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function attachEvents(){
+      // Auto-fill load name when phase N is selected for Three Phase Wye
+      phaseSelect.addEventListener('change', ()=>{
+        const circType = circuitTypeEl.value;
+        const phase = phaseSelect.value;
+        const loadNameField = document.getElementById('lb-name');
+        if(circType === 'three_wye' && phase === 'N'){
+          loadNameField.value = 'Neutral Current';
+        }
+      });
+
+      document.getElementById('lb-add').addEventListener('click', ()=>{
+        const name = document.getElementById('lb-name').value.trim();
+        const val = parseFloat(document.getElementById('lb-value').value || '0');
+        const phase = phaseSelect.value;
+        if(!name || isNaN(val) || val<=0){ alert('Enter a valid name and positive A value'); return; }
+        loads.unshift({name, value: Number(val), phase}); saveToStorage(); renderLoads(); computeSummary(); document.getElementById('lb-name').value=''; document.getElementById('lb-value').value='';
+      });
+
+      document.getElementById('lb-clear').addEventListener('click', ()=>{ if(confirm('Clear all loads?')){ loads=[]; saveToStorage(); renderLoads(); computeSummary(); } });
+
+      document.getElementById('lb-export').addEventListener('click', ()=>{ exportCSV(); });
+      document.getElementById('lb-import').addEventListener('click', ()=> document.getElementById('file-input').click());
+      document.getElementById('file-input').addEventListener('change', (ev)=>{ const f = ev.target.files[0]; if(f) importCSVFile(f); ev.target.value=''; });
+
+      document.getElementById('apply-suggestion').addEventListener('click', applyFirstSuggestion);
+      document.getElementById('export-full').addEventListener('click', ()=>{ exportReport(); });
+      document.getElementById('print-form').addEventListener('click', generatePrintableForm);
+      // header meta save handlers
+      ['company-name','location-name','panel-board','branch-code','mcb-capacity','main-voltage','wire-size','v-line-line','v-line-neutral','v-phase','remarks-input','conducted-by','witness-by'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener('input', ()=>{
+          try{
+            const meta = { company: document.getElementById('company-name').value || '', location: document.getElementById('location-name').value || '', panel: document.getElementById('panel-board').value || '', branch: document.getElementById('branch-code').value || '', mcb: document.getElementById('mcb-capacity').value || '', mainV: document.getElementById('main-voltage').value || '', wires: document.getElementById('wire-size').value || '', conducted: document.getElementById('conducted-by').value || '', witness: document.getElementById('witness-by').value || '', vll: document.getElementById('v-line-line').value || '', vln: document.getElementById('v-line-neutral').value || '', vph: document.getElementById('v-phase').value || '', remarks: document.getElementById('remarks-input').value || '' };
+            localStorage.setItem('lb_form_meta', JSON.stringify(meta));
+          }catch(e){console.warn('Failed to save header meta', e);}        
+        });
+      });
+
+      tabBalance.addEventListener('click', ()=>{ tabBalance.classList.add('active'); tabFull.classList.remove('active'); balanceSection.style.display='block'; fulltestSection.style.display='none'; });
+      tabFull.addEventListener('click', ()=>{ tabFull.classList.add('active'); tabBalance.classList.remove('active'); balanceSection.style.display='none'; fulltestSection.style.display='block'; });
+
+      // full test
+      runTestBtn.addEventListener('click', runFullLoadTest);
+      document.getElementById('reset-test').addEventListener('click', ()=>{ document.getElementById('nameplate-power').value=''; document.getElementById('meas-van').value=''; document.getElementById('meas-vbn').value=''; document.getElementById('meas-vcn').value=''; document.getElementById('meas-ia').value=''; document.getElementById('meas-ib').value=''; document.getElementById('meas-ic').value=''; document.getElementById('pf-a').value=''; document.getElementById('pf-b').value=''; document.getElementById('pf-c').value=''; document.getElementById('res-pa').textContent='0 kW'; document.getElementById('res-pb').textContent='0 kW'; document.getElementById('res-pc').textContent='0 kW'; document.getElementById('res-total').textContent='0 kW'; document.getElementById('res-pct').textContent='0 %'; });
+    }
+
+    function computeSummary(){
+      // Compute per-phase totals using simple mapping: phases can be A/B/C or AB/BC/CA or L1/L2
+      const t = circuitTypeEl.value;
+      const totals = {};
+      // initialize possible keys
+      if(t==='three_wye'){ ['AN','BN','CN','N'].forEach(k=>totals[k]=0); }
+      else if(t==='three_delta'){ ['AB','BC','CA'].forEach(k=>totals[k]=0); }
+      else if(t==='single_ll'){ ['L1','L2'].forEach(k=>totals[k]=0); }
+      else { ['L1'].forEach(k=>totals[k]=0); }
+
+      loads.forEach(l=>{ if(totals[l.phase]===undefined) totals[l.phase]=0; totals[l.phase]+=Number(l.value); });
+
+      // fill UI
+      const keys = Object.keys(totals);
+      const A = totals[keys[0]]||0; const B = totals[keys[1]]||0; const C = totals[keys[2]]||0;
+      document.getElementById('sumA').textContent = (A||0).toFixed(2);
+      document.getElementById('sumB').textContent = (B||0).toFixed(2);
+      document.getElementById('sumC').textContent = (C||0).toFixed(2);
+      // Update summary labels to reflect delta naming when applicable
+      try{
+        const barLabels = document.querySelectorAll('.bars .label');
+        if(barLabels && barLabels.length>=3){
+          if(t === 'three_delta'){
+            barLabels[0].childNodes[0].textContent = 'L1L2: ';
+            barLabels[1].childNodes[0].textContent = 'L1L3: ';
+            barLabels[2].childNodes[0].textContent = 'L2L3: ';
+          } else {
+            barLabels[0].childNodes[0].textContent = 'A: ';
+            barLabels[1].childNodes[0].textContent = 'B: ';
+            barLabels[2].childNodes[0].textContent = 'C: ';
+          }
+        }
+      }catch(e){/* ignore if DOM shape differs */}
+      const total = Object.values(totals).reduce((s,v)=>s+v,0);
+      document.getElementById('sumTotal').textContent = total.toFixed(2) + ' A';
+      const avg = total / Math.max(3, keys.length);
+      document.getElementById('sumAvg').textContent = avg.toFixed(2) + ' A';
+      const maxDev = Math.max(...Object.values(totals).map(v=>Math.abs(v-avg)));
+      const imb = avg>0 ? (maxDev/avg*100) : 0;
+      document.getElementById('sumImb').textContent = imb.toFixed(1) + ' %';
+
+      // update bars using largest of present phases
+      const maxVal = Math.max(...Object.values(totals), 1);
+      document.getElementById('barA').style.height = Math.round(((A||0)/maxVal)*100) + '%';
+      document.getElementById('barB').style.height = Math.round(((B||0)/maxVal)*100) + '%';
+      document.getElementById('barC').style.height = Math.round(((C||0)/maxVal)*100) + '%';
+
+      // suggestions (attempt to move single loads from heaviest to lightest)
+      const phaseList = Object.keys(totals);
+      const ordered = phaseList.map(p=>({p,v:totals[p]||0})).sort((a,b)=>b.v-a.v);
+      const suggestions = [];
+      if(ordered.length>=2){
+        const heavy = ordered[0].p; const light = ordered[ordered.length-1].p;
+        const candidateLoads = loads.filter(l=>l.phase===heavy).slice().sort((a,b)=>b.value-a.value);
+        let curTotals = Object.assign({}, totals);
+        for(const c of candidateLoads){
+          const newTotals = Object.assign({}, curTotals);
+          newTotals[heavy] -= c.value; newTotals[light] += c.value;
+          const beforeRange = Math.max(...Object.values(curTotals)) - Math.min(...Object.values(curTotals));
+          const afterRange = Math.max(...Object.values(newTotals)) - Math.min(...Object.values(newTotals));
+          if(afterRange < beforeRange){ suggestions.push({name:c.name,value:c.value,from:heavy,to:light}); curTotals = newTotals; }
+          if(suggestions.length>=5) break;
+        }
+      }
+      const sugEl = document.getElementById('suggestions');
+      if(suggestions.length===0) sugEl.textContent = 'No single-load moves found that improve balance significantly.';
+      else{ sugEl.innerHTML = ''; suggestions.forEach((s,i)=>{ const d = document.createElement('div'); d.innerHTML = `${i+1}. Move <strong>${escapeHTML(s.name)}</strong> (${s.value} A) from ${s.from} -> ${s.to}`; sugEl.appendChild(d); }); }
+      // save suggestions to window for quick apply
+      window._lb_suggestions = suggestions;
+    }
+
+    function applyFirstSuggestion(){ const s = (window._lb_suggestions||[])[0]; if(!s) return alert('No suggestion available'); const idx = loads.findIndex(l=> l.name===s.name && l.value===s.value && l.phase===s.from); if(idx>=0){ loads[idx].phase = s.to; saveToStorage(); renderLoads(); computeSummary(); } }
+
+    // export CSV
+    function exportCSV(){
+      // include header/meta info at top of CSV (as comment lines) so exports reflect printable header
+      const company = document.getElementById('company-name') ? document.getElementById('company-name').value : '';
+      const location = document.getElementById('location-name') ? document.getElementById('location-name').value : '';
+      const panel = document.getElementById('panel-board') ? document.getElementById('panel-board').value : '';
+      const branch = document.getElementById('branch-code') ? document.getElementById('branch-code').value : '';
+      const mcb = document.getElementById('mcb-capacity') ? document.getElementById('mcb-capacity').value : '';
+      const mainV = document.getElementById('main-voltage') ? document.getElementById('main-voltage').value : '';
+      const wires = document.getElementById('wire-size') ? document.getElementById('wire-size').value : '';
+
+      const headerLines = [
+        `# Company: ${company}`,
+        `# Location: ${location}`,
+        `# MAIN CIRCUIT DETAILS`,
+        `# Panel: ${panel}`,
+        `# Branch: ${branch}`,
+        `# MCB: ${mcb} A`,
+        `# Main V: ${mainV} V`,
+        `# Wires: ${wires}`,
+        ''
+      ];
+
+      const rows = [['name','value','phase']];
+      loads.forEach(l=> rows.push([`"${String(l.name).replace(/"/g,'""') }"`, String(l.value), l.phase]));
+      const csvContent = headerLines.join('\n') + rows.map(r=>r.join(',')).join('\n');
+      const blob = new Blob([csvContent],{type:'text/csv'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'loads.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    }
+
+    function importCSVFile(file){ const reader = new FileReader(); reader.onload = e=>{ const text = e.target.result.replace(/\r/g,''); const lines = text.split('\n').map(s=>s.trim()).filter(Boolean); if(lines.length<=1) return alert('No data'); lines.shift(); const imported=[]; lines.forEach(line=>{ const parts = line.split(','); if(parts.length<3) return; let name = parts[0].replace(/^"|"$/g,'').trim(); const value = parseFloat(parts[1]); const phase = (parts[2]||'').trim(); if(!isNaN(value)) imported.push({name,value,phase}); }); if(imported.length){ loads = imported.concat(loads); saveToStorage(); renderLoads(); computeSummary(); } }; reader.readAsText(file); }
+
+    // export simple report (CSV of totals + suggestions as text)
+    function exportReport(){
+      const company = document.getElementById('company-name') ? document.getElementById('company-name').value : '';
+      const location = document.getElementById('location-name') ? document.getElementById('location-name').value : '';
+      const panel = document.getElementById('panel-board') ? document.getElementById('panel-board').value : '';
+      const branch = document.getElementById('branch-code') ? document.getElementById('branch-code').value : '';
+      const mcb = document.getElementById('mcb-capacity') ? document.getElementById('mcb-capacity').value : '';
+      const mainV = document.getElementById('main-voltage') ? document.getElementById('main-voltage').value : '';
+      const wires = document.getElementById('wire-size') ? document.getElementById('wire-size').value : '';
+
+      const totals = {A:document.getElementById('sumA').textContent, B:document.getElementById('sumB').textContent, C:document.getElementById('sumC').textContent};
+      let text = '';
+      text += `Company: ${company}\n`;
+      text += `Location: ${location}\n`;
+      text += `MAIN CIRCUIT DETAILS\n`;
+      text += `Panel: ${panel}\n`;
+      text += `Branch: ${branch}\n`;
+      text += `MCB: ${mcb} A\n`;
+      text += `Main V: ${mainV} V\n`;
+      text += `Wires: ${wires}\n\n`;
+
+      text += 'Totals:\n';
+      text += `A: ${totals.A} A\nB: ${totals.B} A\nC: ${totals.C} A\n\n`;
+      text += 'Suggestions:\n' + (document.getElementById('suggestions').innerText||'') + '\n\n';
+      text += 'Remarks:\n' + (document.getElementById('remarks-input') ? document.getElementById('remarks-input').value : '') + '\n';
+
+      const blob = new Blob([text],{type:'text/plain'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'load_report.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    }
+
+    async function generatePrintableForm(){
+      // Build printable HTML matching the supplied form layout
+      const title = 'LOAD BALANCING';
+      const dateStr = new Date().toLocaleDateString();
+      const company = document.getElementById('company-name') ? document.getElementById('company-name').value : '';
+      const location = document.getElementById('location-name') ? document.getElementById('location-name').value : '';
+      const panel = document.getElementById('panel-board') ? document.getElementById('panel-board').value : '';
+      const branch = document.getElementById('branch-code') ? document.getElementById('branch-code').value : '';
+      const circType = circuitTypeEl ? circuitTypeEl.value : '';
+      
+      // Only get voltage values from enabled fields based on circuit type
+      let vll = '', vln = '', vph = '';
+      const vLLField = document.getElementById('v-line-line');
+      const vLNField = document.getElementById('v-line-neutral');
+      const vPhField = document.getElementById('v-phase');
+      
+      if(vLLField && !vLLField.disabled) vll = vLLField.value;
+      if(vLNField && !vLNField.disabled) vln = vLNField.value;
+      if(vPhField && !vPhField.disabled) vph = vPhField.value;
+      // printable reference id (format: LB-YYYYMMDD-HHMMSS)
+      const _nowRef = new Date();
+      const _pad = n => String(n).padStart(2, '0');
+      const refId = 'LB-' + _nowRef.getFullYear() + _pad(_nowRef.getMonth()+1) + _pad(_nowRef.getDate()) + '-' + _pad(_nowRef.getHours()) + _pad(_nowRef.getMinutes()) + _pad(_nowRef.getSeconds());
+
+      // prepare rows: Branch circuit numbered rows
+      // (Main circuit label has been moved to the header above the Panel field)
+      // keep the same visible row count as before by adding 1
+      const maxRows = Math.max(24, loads.length) + 1;
+      // create arrays for line currents
+      const rows = [];
+
+      // populate branch rows with loads in reverse order (last added appears first)
+      const reversedLoads = loads.slice().reverse();
+      for(let i=0;i<maxRows;i++){
+        const load = reversedLoads[i];
+        const desc = load ? load.name : '';
+        // determine line currents placement
+        let l1='', l2='', l3='', n='';
+        if(load){
+          const ph = String(load.phase||'').toUpperCase().replace(/\s+/g,'');
+          if(circType === 'three_delta'){
+            // Explicit mapping for delta phases to printed columns:
+            // AB -> L1L2 (col1), CA -> L1L3 (col2), BC -> L2L3 (col3)
+            if(ph==='AB' || ph==='BA') l1 = Number(load.value).toFixed(2);
+            else if(ph==='CA' || ph==='AC') l2 = Number(load.value).toFixed(2);
+            else if(ph==='BC' || ph==='CB') l3 = Number(load.value).toFixed(2);
+          } else {
+            if(ph.indexOf('A')!==-1 || ph.indexOf('L1')!==-1) l1 = Number(load.value).toFixed(2);
+            if(ph.indexOf('B')!==-1 || ph.indexOf('L2')!==-1) l2 = Number(load.value).toFixed(2);
+            if(ph.indexOf('C')!==-1 || ph.indexOf('L3')!==-1 || ph.indexOf('3')!==-1) l3 = Number(load.value).toFixed(2);
+            if(ph.indexOf('N')!==-1) n = Number(load.value).toFixed(2);
+          }
+        }
+        const hasCurrent = !!(l1 || l2 || l3);
+        const vl = hasCurrent ? (vll || '') : '';
+        const phv = hasCurrent ? (vph || vln || '') : '';
+        rows.push({description: desc, n: n, l1, l2, l3, v_l12: vl, v_l13: vl, v_l23: vl, ph_l1n: phv, ph_l2n: phv, ph_l3n: phv, remarks:''});
+      }
+
+      // totals for L1,L2,L3
+      let totL1=0, totL2=0, totL3=0; totN=0;
+      rows.forEach(r=>{ totL1 += parseFloat(r.l1||0); totL2 += parseFloat(r.l2||0); totL3 += parseFloat(r.l3||0); totN += parseFloat(r.n||0) });
+
+      // Calculate neutral current for Three Phase Wye using vector addition
+      let neutralCurrentDisplay = totN.toFixed(2);
+      let neutralCurrentMagnitude = totN;
+      let totalRowRemark = '';
+      
+      if(circType === 'three_wye'){
+        // Convert phase currents to complex form with phase angles
+        // L1: 0°, L2: 120°, L3: -120° (or 240°)
+        const deg2rad = Math.PI / 180;
+        
+        // L1 at 0°: I_L1 * (cos(0) + j*sin(0))
+        const L1_real = totL1 * Math.cos(0 * deg2rad);
+        const L1_imag = totL1 * Math.sin(0 * deg2rad);
+        
+        // L2 at 120°: I_L2 * (cos(120) + j*sin(120))
+        const L2_real = totL2 * Math.cos(120 * deg2rad);
+        const L2_imag = totL2 * Math.sin(120 * deg2rad);
+        
+        // L3 at -120°: I_L3 * (cos(-120) + j*sin(-120))
+        const L3_real = totL3 * Math.cos(-120 * deg2rad);
+        const L3_imag = totL3 * Math.sin(-120 * deg2rad);
+        
+        // Sum the complex components
+        const In_real = L1_real + L2_real + L3_real;
+        const In_imag = L1_imag + L2_imag + L3_imag;
+        
+        // Convert to polar form: magnitude and angle
+        const In_magnitude = Math.sqrt(In_real * In_real + In_imag * In_imag);
+        const In_angle = Math.atan2(In_imag, In_real) * (180 / Math.PI);
+        
+        // Format as "I∠φ"
+        neutralCurrentDisplay = `${In_magnitude.toFixed(2)}∠${In_angle.toFixed(1)}°`;
+        neutralCurrentMagnitude = In_magnitude;
+        
+        // Check if circuit is balanced or unbalanced
+        const avgPhaseCurrent = (totL1 + totL2 + totL3) / 3;
+        if(In_magnitude > avgPhaseCurrent){
+          totalRowRemark = 'Unbalanced Circuit';
+        } else {
+          totalRowRemark = 'Balanced';
+        }
+      } else if(circType === 'three_delta'){
+        // For Three Phase Delta: Check if any line current deviates more than 20% from average
+        const avgLineCurrent = (totL1 + totL2 + totL3) / 3;
+        const threshold = avgLineCurrent * 0.20; // 20% threshold
+        
+        const deviationL1 = Math.abs(totL1 - avgLineCurrent);
+        const deviationL2 = Math.abs(totL2 - avgLineCurrent);
+        const deviationL3 = Math.abs(totL3 - avgLineCurrent);
+        
+        if(deviationL1 > threshold || deviationL2 > threshold || deviationL3 > threshold){
+          totalRowRemark = 'Unbalanced';
+        } else {
+          totalRowRemark = 'Balanced';
+        }
+      }
+
+      // try to reference the images folder next to this page for printable background
+      const _baseHref = (function(){ try{ const href = location.href; return href.replace(/[^\/]*$/,''); }catch(e){ return './'; } })();
+      const printableBg = _baseHref + 'images/toms_background.png';
+      // attempt to fetch the image and inline as data URL to avoid blob/origin issues
+      let bgCssUrl = printableBg;
+      try{
+        const resp = await fetch(printableBg);
+        if(resp.ok){
+          const iblob = await resp.blob();
+          const buf = await iblob.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          // convert to binary string in chunks to avoid stack limits
+          let binary = '';
+          const chunk = 0x8000;
+          for(let i=0;i<bytes.length;i+=chunk){
+            const sub = bytes.subarray(i, i+chunk);
+            binary += String.fromCharCode.apply(null, Array.from(sub));
+          }
+          const b64 = btoa(binary);
+          bgCssUrl = `data:${iblob.type};base64,${b64}`;
+        }
+      }catch(e){ /* fallback to printableBg path */ }
+
+      const html = [];
+      html.push('<!doctype html><html><head><meta charset="utf-8"><title>Printable Load Balancing Form</title>');
+      html.push('<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px;background:url("'+ bgCssUrl + '") no-repeat center top/cover}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px}th{background:#eee;text-align:center}td.center{text-align:center} .small{font-size:11px}</style>');
+      html.push('</head><body>');
+      html.push(`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><strong>${escapeHtml(company || '')}</strong><br><span class="small">${escapeHtml(location || '')}</span><br><span class="small"><strong>MAIN CIRCUIT DETAILS</strong></span><br><span class="small">Panel: ${escapeHtml(panel || '')}</span><br><span class="small">Branch: ${escapeHtml(branch || '')}</span><br><span class="small">MCB: ${escapeHtml(String(document.getElementById('mcb-capacity') ? document.getElementById('mcb-capacity').value : '') || '')} A</span><br><span class="small">Main V: ${escapeHtml(String(document.getElementById('main-voltage') ? document.getElementById('main-voltage').value : '') || '')} V</span><br><span class="small">Wires: ${escapeHtml(String(document.getElementById('wire-size') ? document.getElementById('wire-size').value : '') || '')}</span></div><div><strong>${title}</strong><br>Date: ${dateStr}<br>Ref: ${escapeHtml(refId)}</div></div>`);
+
+      // determine header labels for line currents (adjust for delta and single phase circuits)
+      let lineLabels;
+      if(circType === 'three_delta'){
+        lineLabels = ['L1L2','L1L3','L2L3'];
+      } else if(circType === 'single_llc'){
+        lineLabels = ['L1L2','L2','L3','N'];
+      } else {
+        lineLabels = ['L1','L2','L3','N'];
+      }
+
+      html.push('<table>');
+      html.push('<thead>');
+      html.push('<tr>');
+      html.push('<th rowspan="2">DESCRIPTION</th>');
+      // For delta, use 3 columns (no N), for others use 4 columns
+      const lineCurrentColspan = (circType === 'three_delta') ? '3' : '4';
+      html.push(`<th colspan="${lineCurrentColspan}">LINE CURRENT (AMPS)</th>`);
+      html.push('<th colspan="3">LINE VOLTAGE (VOLTS)</th>');
+      html.push('<th colspan="3">PHASE VOLTAGE (VOLTS)</th>');
+      html.push('<th rowspan="2">REMARKS</th>');
+      html.push('</tr>');
+      html.push('<tr>');
+      // For delta: only 3 columns, for others: 4 columns including N
+      if(circType === 'three_delta'){
+        html.push(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th>`);
+      } else {
+        html.push(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th><th>${lineLabels[3]}</th>`);
+      }
+      html.push('<th>V_L1L2</th><th>V_L1L3</th><th>V_L2L3</th>');
+      html.push('<th>L1-N</th><th>L2-N</th><th>L3-N</th>');
+      html.push('</tr>');
+      html.push('</thead>');
+      html.push('<tbody>');
+
+      // render rows
+      rows.forEach((r, idx)=>{
+        // Skip empty rows (no description and no values)
+        const hasData = r.description || r.l1 || r.l2 || r.l3 || r.n || r.v_l12 || r.v_l13 || r.v_l23 || r.ph_l1n || r.ph_l2n || r.ph_l3n || r.remarks;
+        if(!hasData) return;
+        
+        html.push('<tr>');
+        html.push(`<td>${escapeHtml(r.description)}</td>`);
+        html.push(`<td class="center">${r.l1||''}</td>`);
+        html.push(`<td class="center">${r.l2||''}</td>`);
+        html.push(`<td class="center">${r.l3||''}</td>`);
+        // Only show N column for non-delta circuits
+        if(circType !== 'three_delta'){
+          html.push(`<td class="center">${r.n||''}</td>`);
+        }
+        // For single phase line-to-line combined, only show V_L1L2
+        if(circType === 'single_llc'){
+          html.push(`<td class="center">${r.v_l12||''}</td>`);
+          html.push(`<td class="center"></td>`);
+          html.push(`<td class="center"></td>`);
+        } else {
+          html.push(`<td class="center">${r.v_l12||''}</td>`);
+          html.push(`<td class="center">${r.v_l13||''}</td>`);
+          html.push(`<td class="center">${r.v_l23||''}</td>`);
+        }
+        // For single phase line-to-neutral, only show L1-N phase voltage
+        if(circType === 'single_ln'){
+          html.push(`<td class="center">${r.ph_l1n||''}</td>`);
+          html.push(`<td class="center"></td>`);
+          html.push(`<td class="center"></td>`);
+        } else if(circType === 'single_ll'){
+          // For single phase line-to-line split, show L1-N and L2-N only
+          html.push(`<td class="center">${r.ph_l1n||''}</td>`);
+          html.push(`<td class="center">${r.ph_l2n||''}</td>`);
+          html.push(`<td class="center"></td>`);
+        } else if(circType === 'three_delta'){
+          // For three phase delta, don't show phase-to-neutral voltages
+          html.push(`<td class="center"></td>`);
+          html.push(`<td class="center"></td>`);
+          html.push(`<td class="center"></td>`);
+        } else {
+          html.push(`<td class="center">${r.ph_l1n||''}</td>`);
+          html.push(`<td class="center">${r.ph_l2n||''}</td>`);
+          html.push(`<td class="center">${r.ph_l3n||''}</td>`);
+        }
+        
+        // Check for suspected harmonics in Neutral Current row for Three Phase Wye
+        let rowRemark = r.remarks || '';
+        if(circType === 'three_wye' && r.description === 'Neutral Current' && r.n){
+          const measuredNeutral = parseFloat(r.n);
+          if(measuredNeutral > neutralCurrentMagnitude){
+            rowRemark = 'Suspected Harmonics';
+          }
+        }
+        
+        html.push(`<td class="center">${rowRemark}</td>`);
+        html.push('</tr>');
+      });
+
+      // totals row
+      html.push('<tr>');
+      html.push('<td style="text-align:right"><strong>Total</strong></td>');
+      html.push(`<td class="center"><strong>${totL1.toFixed(2)}</strong></td>`);
+      html.push(`<td class="center"><strong>${totL2.toFixed(2)}</strong></td>`);
+      html.push(`<td class="center"><strong>${totL3.toFixed(2)}</strong></td>`);
+      // Only show N column for non-delta circuits
+      if(circType !== 'three_delta'){
+        html.push(`<td class="center"><strong>${neutralCurrentDisplay}</strong></td>`);
+      }
+      html.push('<td></td><td></td><td></td><td></td><td></td><td></td>');
+      html.push(`<td class="center"><strong>${totalRowRemark}</strong></td>`);
+      html.push('</tr>');
+
+      // Add Remarks row at the bottom: leave other columns empty and put remarks in the last column
+      const remarksVal = escapeHtml(document.getElementById('remarks-input') ? document.getElementById('remarks-input').value : '');
+      html.push('<tr>');
+      // 10 empty cells (DESCRIPTION + 3 line currents + 3 line voltages + 3 phase voltages = 10)
+      for(let i=0;i<11;i++) html.push('<td></td>');
+      html.push(`<td class="center">${remarksVal}</td>`);
+      html.push('</tr>');
+
+      html.push('</tbody></table>');
+      html.push('<div style="margin-top:8px;font-size:12px">Generated by Load Balancer Tool</div>');
+      // footer with signatures and timestamp (printed values)
+      const conducted = escapeHtml(document.getElementById('conducted-by') ? document.getElementById('conducted-by').value : '');
+      const witness = escapeHtml(document.getElementById('witness-by') ? document.getElementById('witness-by').value : '');
+      const printedAt = new Date().toLocaleString();
+      html.push('<div style="margin-top:18px;display:flex;gap:12px;justify-content:space-between;align-items:flex-start">');
+      html.push(`<div style="flex:1"><strong>Load Balancing Conducted by:</strong><div style="border-bottom:1px solid #000;padding:6px 2px;margin-top:6px">${conducted}</div></div>`);
+      html.push(`<div style="flex:1"><strong>Witnessed and Verified by:</strong><div style="border-bottom:1px solid #000;padding:6px 2px;margin-top:6px">${witness}</div></div>`);
+      html.push(`<div style="flex:0 0 220px"><strong>Date / Time:</strong><div style="padding:6px 2px;margin-top:6px">${escapeHtml(printedAt)}</div></div>`);
+      html.push('</div>');
+      // add a Print button instead of auto-print to avoid blocking/freeze in some browsers
+      html.push('<div style="margin-top:8px;text-align:right"><button id="printBtn" style="padding:8px 12px;font-size:13px">Print</button></div>');
+      html.push('<scr' + 'ipt>function initPrint(){ try{ const btn=document.getElementById("printBtn"); if(btn){ btn.addEventListener("click", ()=>{ try{ window.focus(); window.print(); }catch(e){ alert("Print failed: "+e); } } ); } window.focus(); }catch(e){} } window.onload=initPrint;</scr' + 'ipt>');
+      html.push('</body></html>');
+
+      // Open printable in a Blob URL to avoid blocking UI or popup-related freezes
+      try{
+        const content = html.join('');
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        if(!win){
+          alert('Popup blocked - allow popups to open the printable form.');
+          URL.revokeObjectURL(url);
+          return;
+        }
+        // revoke URL after some time to free memory
+        setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 30000);
+      }catch(e){
+        // fallback to document.write if blob/open fails
+        const win = window.open('about:blank','_blank');
+        if(!win){ alert('Popup blocked - allow popups to print the form.'); return; }
+        win.document.open(); win.document.write(html.join('')); win.document.close();
+      }
+
+      function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    }
+
+    // full load test calculations
+    function runFullLoadTest(){
+      // read values
+      const nameplate = parseFloat(document.getElementById('nameplate-power').value || '0');
+      const van = parseFloat(document.getElementById('meas-van').value || '0');
+      const vbn = parseFloat(document.getElementById('meas-vbn').value || '0');
+      const vcn = parseFloat(document.getElementById('meas-vcn').value || '0');
+      const ia = parseFloat(document.getElementById('meas-ia').value || '0');
+      const ib = parseFloat(document.getElementById('meas-ib').value || '0');
+      const ic = parseFloat(document.getElementById('meas-ic').value || '0');
+      const pfa = parseFloat(document.getElementById('pf-a').value || '1') || 1;
+      const pfb = parseFloat(document.getElementById('pf-b').value || '1') || 1;
+      const pfc = parseFloat(document.getElementById('pf-c').value || '1') || 1;
+      const t = circuitTypeEl.value;
+
+      // For three-phase line-to-line (delta or line-to-line): P = sqrt(3) * V_ll * I_line * PF
+      // For wye line-to-neutral measurements we use per-phase P = V_ph * I_ph * PF
+      let pa = 0, pb = 0, pc = 0;
+      if(t==='three_wye'){
+        pa = van * ia * pfa / 1000; pb = vbn * ib * pfb / 1000; pc = vcn * ic * pfc / 1000;
+      } else if(t==='three_delta' || t==='single_ll'){
+        // assume measured voltages are line-to-line; total P ~= sqrt(3)*Vll*Iline*PF distributed per phase equally approximation
+        const vll = Math.max(van||0, vbn||0, vcn||0);
+        const total = Math.SQRT3 * vll * Math.max(ia,ib,ic) * ((pfa+pfb+pfc)/3) / 1000;
+        // distributed proportionally to currents
+        const sumI = (ia+ib+ic) || 1;
+        pa = total * (ia/sumI); pb = total * (ib/sumI); pc = total * (ic/sumI);
+      } else if(t==='single_ln'){
+        // single phase measured on L1 only
+        pa = van * ia * pfa / 1000; pb=0; pc=0;
+      } else if(t==='single_llc'){
+        // single phase measured on L1 only
+        pa = van * ia * pfa / 1000; pb=0; pc=0;
+      }
+      const total = pa+pb+pc;
+      document.getElementById('res-pa').textContent = pa.toFixed(3) + ' kW';
+      document.getElementById('res-pb').textContent = pb.toFixed(3) + ' kW';
+      document.getElementById('res-pc').textContent = pc.toFixed(3) + ' kW';
+      document.getElementById('res-total').textContent = total.toFixed(3) + ' kW';
+      const pct = nameplate>0 ? (total / nameplate * 100) : 0;
+      document.getElementById('res-pct').textContent = pct.toFixed(1) + ' %';
+    }
+
+    // initialize app
+    init();
+    // compute summary periodically when storage or other pages change
+    window.addEventListener('storage', ()=>{ loads = loadFromStorage(); renderLoads(); computeSummary(); });
+  </script>
+</body>
+</html>

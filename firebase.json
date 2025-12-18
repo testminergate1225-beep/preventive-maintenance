@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "site": "preventive-maintenance-app-befc4",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

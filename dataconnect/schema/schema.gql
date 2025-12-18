@@ -1,0 +1,33 @@
+type User @table {
+  displayName: String!
+  createdAt: Timestamp!
+  email: String
+  photoUrl: String
+}
+
+type Asset @table {
+  user: User
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  location: String
+  serialNumber: String
+}
+
+type MaintenanceTaskDefinition @table {
+  asset: Asset
+  name: String!
+  frequencyInDays: Int!
+  createdAt: Timestamp!
+  description: String
+  lastScheduledDate: Timestamp
+}
+
+type MaintenanceTaskLog @table {
+  asset: Asset
+  maintenanceTaskDefinition: MaintenanceTaskDefinition
+  completedDate: Timestamp!
+  createdAt: Timestamp!
+  notes: String
+  performedBy: String
+}

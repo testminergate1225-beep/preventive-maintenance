@@ -1,0 +1,54 @@
+[
+  {
+    "BranchCode": "tr",
+    "BranchName": "rtrt",
+    "location": "rtrtr",
+    "equipment": "Lighting",
+    "task": "trttrt",
+    "status": "OK",
+    "date": "2025-12-17",
+    "performedBy": "rtrtt",
+    "verifiedBy": "rtrtr",
+    "nextDue": "",
+    "notes": "trttrtrr"
+  },
+  {
+    "BranchCode": "",
+    "BranchName": "",
+    "location": "",
+    "equipment": "Lighting",
+    "task": "Load Balancing",
+    "status": "OK",
+    "date": "2025-12-07",
+    "performedBy": "",
+    "verifiedBy": "",
+    "nextDue": "",
+    "notes": ""
+  },
+  {
+    "BranchCode": "",
+    "BranchName": "",
+    "location": "",
+    "equipment": "Lighting",
+    "task": "Tighten connections in panel boards",
+    "status": "OK",
+    "date": "2025-12-07",
+    "performedBy": "",
+    "verifiedBy": "",
+    "nextDue": "",
+    "notes": ""
+  },
+  {
+    "BranchCode": "",
+    "BranchName": "",
+    "location": "",
+    "equipment": "Lighting",
+    "task": "Visual inspection of store",
+    "status": "OK",
+    "date": "2025-12-07",
+    "performedBy": "",
+    "verifiedBy": "",
+    "nextDue": "",
+    "notes": ""
+  }
+]

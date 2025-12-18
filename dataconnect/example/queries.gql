@@ -1,0 +1,35 @@
+mutation CreateUser @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  user_insert(data: {
+    displayName: "New User",
+    createdAt_expr: "request.time"
+  })
+}
+
+query ListAssets @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  assets {
+    id
+    name
+    description
+  }
+}
+
+mutation CreateMaintenanceTaskLog($assetId: UUID!, $maintenanceTaskDefinitionId: UUID!, $completedDate: Timestamp!, $notes: String!, $performedBy: String!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  maintenanceTaskLog_insert(data: {
+    assetId: $assetId,
+    maintenanceTaskDefinitionId: $maintenanceTaskDefinitionId,
+    completedDate: $completedDate,
+    createdAt_expr: "request.time",
+    notes: $notes,
+    performedBy: $performedBy
+  })
+}
+
+query ListMaintenanceTaskDefinitionsForAsset($assetId: UUID!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  maintenanceTaskDefinitions(where: {assetId: {eq: $assetId}}) {
+    id
+    name
+    description
+    frequencyInDays
+    lastScheduledDate
+  }
+}

@@ -1,0 +1,60 @@
+mutation CreateDemoData @transaction @auth(level: USER, insecureReason: "This operation is a utility for seeding data and is safe to expose to all logged in users.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      displayName: "demouser1",
+      createdAt: "2024-04-29T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      displayName: "demouser2",
+      createdAt: "2024-04-29T12:00:00Z"
+    }
+  ])
+  asset_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440002",
+      name: "demoasset1",
+      createdAt: "2024-04-29T12:00:00Z",
+      userId: "550e8400-e29b-41d4-a716-446655440000"
+    },
+    {
+      id: "750e8400-e29b-41d4-a716-446655440003",
+      name: "demoasset2",
+      createdAt: "2024-04-29T12:00:00Z",
+      userId: "550e8400-e29b-41d4-a716-446655440001"
+    }
+  ])
+  maintenanceTaskDefinition_insertMany(data: [
+    {
+      id: "850e8400-e29b-41d4-a716-446655440004",
+      name: "demotask1",
+      createdAt: "2024-04-29T12:00:00Z",
+      assetId: "650e8400-e29b-41d4-a716-446655440002",
+      frequencyInDays: 30
+    },
+    {
+      id: "950e8400-e29b-41d4-a716-446655440005",
+      name: "demotask2",
+      createdAt: "2024-04-29T12:00:00Z",
+      assetId: "750e8400-e29b-41d4-a716-446655440003",
+      frequencyInDays: 60
+    }
+  ])
+  maintenanceTaskLog_insertMany(data: [
+    {
+      id: "a50e8400-e29b-41d4-a716-446655440006",
+      createdAt: "2024-04-29T12:00:00Z",
+      completedDate: "2024-04-30T12:00:00Z",
+      assetId: "650e8400-e29b-41d4-a716-446655440002",
+      maintenanceTaskDefinitionId: "850e8400-e29b-41d4-a716-446655440004"
+    },
+    {
+      id: "b50e8400-e29b-41d4-a716-446655440007",
+      createdAt: "2024-04-29T12:00:00Z",
+      completedDate: "2024-05-01T12:00:00Z",
+      assetId: "750e8400-e29b-41d4-a716-446655440003",
+      maintenanceTaskDefinitionId: "950e8400-e29b-41d4-a716-446655440005"
+    }
+  ])
+}
