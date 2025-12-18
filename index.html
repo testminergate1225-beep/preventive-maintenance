@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<link rel="icon" type="image/x-icon" href="images/favicon.ico">
+	<title>Electrical Preventive Maintenance</title>
+	<style>
+		:root{--bg:#f4f6f8;--card:#fff;--accent:#0b78d1;--muted:#6b7280}
+		*{box-sizing:border-box}
+		body{font-family:Segoe UI, system-ui, -apple-system, 'Helvetica Neue', Arial; margin:0; background-color:var(--bg); color:#111}
+		body{background-image:url('images/tw_bg.png');background-repeat:no-repeat;background-position:center;background-size:cover;background-attachment:fixed}
+		.toast{position:fixed;right:18px;bottom:18px;background:rgba(17,24,39,0.95);color:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 6px 18px rgba(3,10,22,0.2);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;z-index:1200}
+		.toast.show{opacity:1;transform:none}
+		.toast.error{background:#f44336;border-left:4px solid rgba(0,0,0,0.08)}
+		.toast.info{background:rgba(17,24,39,0.95)}
+		header{background: linear-gradient(90deg, rgba(8,59,102,0.55) 0%, rgba(11,120,209,0.55) 100%);color:#fff; padding:18px 22px; position:fixed;left:0;right:0;top:0;z-index:1000;backdrop-filter: blur(6px);-webkit-backdrop-filter: blur(6px);border-bottom: 1px solid rgba(255,255,255,0.06);box-shadow: 0 2px 8px rgba(3,10,22,0.12);}
+		header h1{margin:0;font-size:20px;letter-spacing:0.2px}
+		header p{margin:4px 0 0;color:rgba(255,255,255,0.9);font-size:13px}
+		.container{max-width:1100px;margin:22px auto;padding:12px}
+		header .container{margin:0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+		@media (max-width:600px){header .container{flex-direction:column;align-items:flex-start}}
+		main.container{padding-top:88px}
+		header.no-blur{backdrop-filter:none;-webkit-backdrop-filter:none;background:linear-gradient(90deg, rgba(8,59,102,0.85) 0%, rgba(11,120,209,0.85) 100%)}
+		.header-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+		@media (max-width:600px){
+			.header-controls{width:100%;margin-top:12px}
+			main.container{padding-top:180px}
+		}
+		.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+		@media (max-width:880px){.top-grid{grid-template-columns:1fr}}
+		.grid{display:grid;grid-template-columns:1fr;gap:18px}
+		@media (max-width:880px){.grid{grid-template-columns:1fr}}
+		.card{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 1px 3px rgba(15,23,42,0.06)}
+		h2{margin:0 0 8px;font-size:16px}
+		label{display:block;font-size:13px;color:var(--muted);margin:8px 0 4px}
+		input[type=text],select,textarea,input[type=date]{width:100%;padding:8px;border:1px solid #e6e9ee;border-radius:6px}
+		textarea{min-height:72px;resize:vertical}
+		button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+		button.secondary{background:#eef3fb;color:var(--accent);border:1px solid rgba(0, 0, 0, 0.12)}
+		button.small{font-size:12px;padding:6px 10px}
+		.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+		.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+		.empty{color:var(--muted);padding:18px;text-align:center}
+		.muted{color:var(--muted);font-size:13px}
+		table{width:100%;border-collapse:collapse;margin-top:12px}
+		th,td{padding:8px;border:1px solid #eef1f4;text-align:left;font-size:13px}
+		th{background:#f9fafb;font-weight:600}
+		.actions{white-space:nowrap}
+		.page-error{background:#fee;border:1px solid #faa;color:#c00;padding:10px;border-radius:6px;margin-bottom:12px;display:none}
+		.checklist label{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#111;cursor:pointer}
+		.checklist input[type=checkbox]{margin:0;cursor:pointer}
+		
+		/* Mobile view styles */
+		body.mobile-view .container{max-width:100%;padding:8px}
+		body.mobile-view main.container{padding-top:120px}
+		body.mobile-view header{padding:12px}
+		body.mobile-view header h1{font-size:16px}
+		body.mobile-view header p{font-size:11px}
+		body.mobile-view .header-controls{flex-wrap:wrap;right:8px;top:8px;gap:4px}
+		body.mobile-view button.small{font-size:11px;padding:4px 8px}
+		body.mobile-view .top-grid{grid-template-columns:1fr!important}
+		body.mobile-view .card{padding:10px}
+		body.mobile-view h2{font-size:14px}
+		body.mobile-view label{font-size:12px}
+		body.mobile-view input,body.mobile-view select,body.mobile-view textarea{font-size:12px;padding:6px}
+		body.mobile-view table{font-size:11px;overflow-x:auto;display:block}
+		body.mobile-view th,body.mobile-view td{padding:4px;font-size:11px}
+		body.mobile-view .toolbar{gap:4px}
+		body.mobile-view .row{grid-template-columns:1fr;gap:8px}
+		
+		/* Desktop view override (force desktop layout) */
+		body.desktop-view .top-grid{grid-template-columns:1fr 1fr!important}
+		body.desktop-view .row{grid-template-columns:1fr 1fr!important}
+		
+		/* View toggle button */
+		#view-toggle{position:fixed;bottom:20px;right:20px;z-index:1200;background:var(--accent);color:#fff;border:0;padding:12px 16px;border-radius:50px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:13px;font-weight:600}
+		#view-toggle:hover{box-shadow:0 6px 16px rgba(0,0,0,0.2);transform:translateY(-2px);transition:all 0.2s}
+		
+		/* Header toggle button */
+		#header-toggle{position:fixed;bottom:70px;right:20px;z-index:1200;background:#6b7280;color:#fff;border:0;padding:10px 14px;border-radius:50px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:12px;font-weight:600}
+		#header-toggle:hover{box-shadow:0 6px 16px rgba(0,0,0,0.2);transform:translateY(-2px);transition:all 0.2s;background:#4b5563}
+		
+		/* Hidden header state */
+		body.header-hidden header{transform:translateY(-100%);transition:transform 0.3s ease}
+		body.header-hidden main.container{padding-top:12px!important;transition:padding-top 0.3s ease}
+		
+		/* Welcome message */
+		.welcome-banner{background:linear-gradient(135deg, #eef8ff 0%, #e6f3ff 100%);padding:16px 20px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent);box-shadow:0 2px 6px rgba(11,120,209,0.08)}
+		.welcome-banner h3{margin:0 0 6px;color:var(--accent);font-size:18px;font-weight:600}
+		.welcome-banner p{margin:0;color:var(--muted);font-size:14px}
+		.welcome-banner .datetime{font-weight:500;color:#333;margin-top:4px}
+		body.mobile-view .welcome-banner{padding:12px 14px}
+		body.mobile-view .welcome-banner h3{font-size:15px}
+		body.mobile-view .welcome-banner p{font-size:12px}
+		
+		@media print{.toolbar,button,header,.welcome-banner{display:none!important}main.container{padding-top:12px}}
+	</style>
+	<!-- Firebase SDK -->
+	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+	<script src="firebase-config.js"></script>
+	<script src="auth-guard.js"></script>
+</head>
+<body>
+	<header>
+		<div class="container">
+			<div>
+				<h1>Electrical Preventive Maintenance</h1>
+				<p>Plan and record routine electrical maintenance tasks — panels, breakers, transformers, motors, grounding and more.</p>
+				<p>Use the options below to manage your records and access related forms.</p>
+			</div>
+			<div class="header-controls">
+				<button id="toggle-blur" class="small secondary" title="Toggle header blur">Disable Blur</button>
+				<button id="open-load-balancing" class="small" title="Open Load Balancing form">Load balancing</button>
+				<button id="go-project-monitoring" class="small" title="Open Project Monitoring">Go To Project Monitoring</button>
+				<button id="go-megger-form" class="small" title="Open Megger Test Form">Go To Megger Test Form</button>
+			</div>
+		</div>
+	</header>
+
+	<button id="view-toggle" title="Toggle between mobile and desktop view">📱 Mobile View</button>
+	<button id="header-toggle" title="Hide/Show header for full view">👁️ Hide Header</button>
+
+	<main class="container">
+		<div id="page-error" class="page-error" role="alert" aria-live="assertive"></div>
+		<div id="toast" class="toast" aria-hidden="true"></div>
+		
+		<!-- Welcome Message -->
+		<div id="welcome-banner" class="welcome-banner" style="display:none">
+			<h3 id="welcome-text">Welcome!</h3>
+			<p class="datetime" id="current-datetime"></p>
+		</div>
+		
+		<div class="grid">
+			<div class="top-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+				<section class="card" id="checklist-card">
+					<h2>Quick Task List</h2>
+					<p class="muted">Select only one task at a time and add it to the records form.</p>
+					<div class="checklist" id="checklist">
+						<label><input type="checkbox" value="Visual inspection of store"> Visual inspection of Store</label>
+						<label><input type="checkbox" value="Tighten connections in panel boards"> Tighten connections in panel boards</label>
+						<label><input type="checkbox" value="Test circuit breakers (trip test)"> Test circuit breakers (trip test)</label>
+						<label><input type="checkbox" value="Infrared scan for hot spots"> Infrared scan for hot spots</label>
+						<label><input type="checkbox" value="Insulation resistance Test"> Megger Testing  or Insulation resistance Test</label>
+						<label><input type="checkbox" value="Check grounding & Lugs"> Check grounding & Lugs</label>
+						<label><input type="checkbox" value="Battery/UPS inspection and test"> Battery/UPS inspection and test</label>
+						<label><input type="checkbox" value="Cable route & support inspection"> Cable route & support inspection</label>
+						<label><input type="checkbox" value="Lighting fixture Inspection"> Lighting fixture inspection</label>
+						<label><input type="checkbox" value="Airconditioning unit"> Airconditioning unit</label>
+						<label><input type="checkbox" value="Load Balancing"> Load Balancing</label>
+						<label><input type="checkbox" value="Full load test"> Full load test</label>
+						<label><input type="checkbox" value="Thermal imaging survey"> Thermal imaging survey</label>
+						<label><input type="checkbox" value="Inspection of wiring"> Inspection of wiring</label>
+						<label><input type="checkbox" value="Functional test of emergency lighting"> Functional test of emergency lighting</label>
+						<label><input type="checkbox" value="Test operation of safety devices"> Test operation of safety devices</label>
+						<label><input type="checkbox" value="Check and clean ventilation of electrical rooms"> Check and clean ventilation of electrical rooms</label>
+						<label><input type="checkbox" value ="Testing and Commissioning"> Testing and Commissioning</label>
+					</div>
+					<div style="margin-top:10px;display:flex;gap:8px">
+						<button id="add-selected" class="small">Add selected tasks</button>
+						<button id="clear-selected" class="small secondary">Clear selections</button>
+					</div>
+				</section>
+
+				<section class="card" id="record-form-card">
+					<h2>Add / Record Maintenance</h2>
+					<form id="record-form">
+						<label for="BranchCode"> TW/JA/FH/AQ Branch Code</label>
+						<input id="BranchCode" type="text" placeholder="Enter Branch Code" />
+						<label for="BranchName">Branch Name</label>
+						<input id="BranchName" type="text" placeholder="Enter Branch Name" />
+						<label for="location">Location</label>
+						<input id="location" type="text" placeholder="Location / Address" />
+						<label for="equipment">Equipment</label>
+						<select id="equipment" required>
+							<option value="Lighting">Lighting</option>
+							<option value="Panel Board">Panel Board</option>
+							<option value="Transformer">Transformer</option>
+							<option value="Motor">Motor</option>
+							<option value="UPS/Battery">UPS/Battery</option>
+							<option value="Cabling">Cabling</option>
+							<option value="Grounding">Grounding Cable</option>
+							<option value="Baseboard">Baseboard CO</option>
+							<option value="Air Conditioning">Air Conditioning unit Power Supply</option>
+							<option value="Switch">Switch</option>
+							<option value="Dome light">Dome light</option>
+							<option value="Emergency Light">Emergency Light</option>
+							<option value="Exit Sign">Exit Signage</option>
+							<option value="smd led">SMD LED 5050 Blue Lights</option>
+							<option value="smd led">SMD LED 5050 Warm White</option>
+							<option value="smart led">ADDRESSABLE SMART LED</option>
+							<option value="Control box">Control Box</option>
+							<option value="CCTV UTP Cable">CCTV CAT6 Cable</option>
+							<option value="Cove light">Cove light</option>
+							<option value="Flood light">Flood light</option>
+							<option value="Spot light">Spot light</option>
+							<option value="Recessed light">Recessed light</option>
+							<option value="Panel light">Panel light</option>
+							<option value="Fluorescent">Led Fluorescent tube</option>
+							<option value="Timer">24 hr Timer</option>
+							<option value="CCTV">CCTV DVR/NVR</option>
+							<option value="Circuit Breaker">Circuit Breaker</option>
+							<option value="Convenience Outlet">Convenience Outlet (CO)</option>
+							<option value="Telephone outlet">DATA and Telephone outlet</option>
+							<option value="Grounding busbar">Grounding busbar</option>
+							<option value="Neutral busbar">Neutral busbar</option>
+							<option value="Terminal Lugs">Terminal Lugs</option>
+							<option value="Entrance Signage">Entrance Signage</option>
+							<option value="Auxiliary Lighting">Auxiliary Lighting</option>
+							<option value="Magnetic Contactor">Magnetic Contactor</option>
+							<option value="Automatic Transfer Switch">Automatic Transfer Switch</option>
+							<option value="Manual Transfer Switch">Manual Transfer Switch</option>
+							<option value="Cooling Fan">Cooling Fan</option>
+							<option value="Exhaust Fan">Exhaust Fan</option>
+							<option value="Fire Alarm System">FDAS</option>
+							<option value="THHN Wires">THHN Wires</option>
+							<option value="TF Wire">TF Wire</option>
+							<option value="PVC Conduit">PVC Conduit</option>
+							<option value="EMT Conduit">EMT Conduit</option>
+							<option value="RSC Conduit">RSC Conduit</option>
+							<option value="Flexible Conduit">Flexible Metallic Conduit (FMC)</option>
+							<option value="Cable Tray">Cable Tray</option>
+							<option value="Cable Ladder">Cable Ladder</option>
+							<option value="Other">Other</option>
+						</select>
+
+						<label for="task">Task</label>
+						<input id="task" type="text" placeholder="Describe maintenance task" required />
+
+						<div class="row">
+							<div>
+								<label for="status">Status</label>
+								<select id="status">
+									<option>OK</option>
+									<option>Repaired</option>
+									<option>Requires Follow-up</option>
+									<option>Replaced</option>
+									<option>Not Applicable</option>
+									<option>Pending</option>
+									<option>Ongoing</option>
+									<option>Checked</option>
+									<option>Tested</option>
+									<option>Measured</option>
+									<option>Inspected</option>
+									<option>Serviced</option>
+									<option>Cleaned</option>
+									<option>Started</option>
+									<option>Completed</option>
+								</select>
+							</div>
+							<div>
+								<label for="date">Performed Date</label>
+								<input id="date" type="date" />
+							</div>
+						</div>
+
+						<label for="performedBy">Performed By</label>
+						<input id="performedBy" type="text" placeholder="Electrician / Technician name" />
+
+						<label for="verifiedBy">Verified By</label>
+						<input id="verifiedBy" type="text" placeholder="Verifier name / Officer in-charge" />
+
+						<label for="nextDue">Next Due (optional)</label>
+						<input id="nextDue" type="date" />
+
+						<label for="notes">Notes</label>
+						<textarea id="notes" placeholder="Observations, measurements, parts replaced..."></textarea>
+
+						<div style="margin-top:10px;display:flex;gap:8px">
+							<button id="add-record" type="button">Add Record</button>
+							<button id="reset-form" type="button" class="secondary">Reset Form</button>
+						</div>
+					</form>
+				</section>
+			</div>
+
+			<section class="card">
+				<div style="display:flex;justify-content:space-between;align-items:center">
+					<h2>Records</h2>
+					<div id="records-summary" style="font-size:13px;color:var(--muted)"></div>
+					<div class="toolbar">
+						<button id="export-csv" class="small">Export CSV</button>
+						<button id="print" class="small secondary">Print</button>
+						<button id="view-saved-records" class="small">View Saved Records</button>
+						<button id="save" class="small">&lt;save&gt;</button>
+
+						<button id="clear-all" class="small secondary">Clear All</button>
+					</div>
+				</div>
+
+				<div id="records-area">
+					<table id="records-table" aria-live="polite">
+						<thead>
+							<tr>
+								<th>Branch Code</th>
+								<th>Branch Name</th>
+								<th>Location</th>
+								<th>Date</th>
+								<th>Equipment</th>
+								<th>Task</th>
+								<th>Status</th>
+								<th>Performed By</th>
+								<th>Verified By</th>
+								<th>Next Due</th>
+								<th>Notes</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody id="records-body"></tbody>
+					</table>
+					<div id="empty" class="empty">No records yet — add a maintenance entry or use the checklist.</div>
+				</div>
+			</section>
+		</div>
+
+		<p class="muted" style="margin-top:14px">Tip: Use the export feature to keep an offline audit log. Records persist in your browser's storage on this device.</p>
+	</main>
+
+	<script>
+		console.log('Script started');
+		const KEY = 'epm_records_v1';
+		console.log('KEY:', KEY);
+		const VIEW_MODE_KEY = 'epm_view_mode';	const DISPLAY_CLEARED_KEY = 'epm_display_cleared';		const form = document.getElementById('record-form');
+		console.log('form:', form);
+		const recordsBody = document.getElementById('records-body');
+		console.log('recordsBody:', recordsBody);
+		const emptyEl = document.getElementById('empty');
+		console.log('emptyEl:', emptyEl);
+		const viewToggleBtn = document.getElementById('view-toggle');
+
+		// Initialize view mode
+		function initViewMode(){
+			const savedMode = localStorage.getItem(VIEW_MODE_KEY);
+			const isMobile = window.innerWidth <= 880;
+			const mode = savedMode || (isMobile ? 'mobile' : 'desktop');
+			setViewMode(mode);
+		}
+
+		function setViewMode(mode){
+			document.body.classList.remove('mobile-view', 'desktop-view');
+			document.body.classList.add(mode + '-view');
+			localStorage.setItem(VIEW_MODE_KEY, mode);
+			
+			if(viewToggleBtn){
+				if(mode === 'mobile'){
+					viewToggleBtn.textContent = '📱 Mobile View';
+					viewToggleBtn.title = 'Switch to desktop view';
+				}else{
+					viewToggleBtn.textContent = '🖥️ Desktop View';
+					viewToggleBtn.title = 'Switch to mobile view';
+				}
+			}
+		}
+
+		function toggleViewMode(){
+			const currentMode = document.body.classList.contains('mobile-view') ? 'mobile' : 'desktop';
+			const newMode = currentMode === 'mobile' ? 'desktop' : 'mobile';
+			setViewMode(newMode);
+		}
+
+		if(viewToggleBtn){
+			viewToggleBtn.addEventListener('click', toggleViewMode);
+		}
+
+		initViewMode();
+
+		// Header toggle functionality
+		const HEADER_HIDDEN_KEY = 'epm_header_hidden';
+		const headerToggleBtn = document.getElementById('header-toggle');
+
+		function initHeaderState(){
+			const isHidden = localStorage.getItem(HEADER_HIDDEN_KEY) === '1';
+			if(isHidden){
+				document.body.classList.add('header-hidden');
+				if(headerToggleBtn) headerToggleBtn.textContent = '👁️ Show Header';
+			}
+		}
+
+		function toggleHeader(){
+			const isHidden = document.body.classList.toggle('header-hidden');
+			localStorage.setItem(HEADER_HIDDEN_KEY, isHidden ? '1' : '0');
+			if(headerToggleBtn){
+				headerToggleBtn.textContent = isHidden ? '👁️ Show Header' : '👁️ Hide Header';
+			}
+		}
+
+		if(headerToggleBtn){
+			headerToggleBtn.addEventListener('click', toggleHeader);
+		}
+
+		initHeaderState();
+
+		// Display welcome message with authenticated user and date/time
+		function displayWelcomeMessage() {
+			const welcomeBanner = document.getElementById('welcome-banner');
+			const welcomeText = document.getElementById('welcome-text');
+			const datetimeEl = document.getElementById('current-datetime');
+			
+			if (!welcomeBanner || !welcomeText || !datetimeEl) return;
+			
+			// Get authenticated user
+			if (typeof AuthGuard !== 'undefined' && AuthGuard.isAuthenticated()) {
+				const user = AuthGuard.getCurrentUser();
+				const userName = user.displayName || user.email.split('@')[0] || 'User';
+				
+				// Format current date and time
+				const now = new Date();
+				const options = { 
+					weekday: 'long', 
+					year: 'numeric', 
+					month: 'long', 
+					day: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit',
+					second: '2-digit'
+				};
+				const formattedDateTime = now.toLocaleString('en-US', options);
+				
+				// Update welcome message
+				welcomeText.innerHTML = `Welcome, <strong>${escapeHTML(userName)}</strong>! 👋`;
+				datetimeEl.textContent = `Today is ${formattedDateTime}`;
+				
+				// Show banner
+				welcomeBanner.style.display = 'block';
+			} else {
+				// Wait for auth to load
+				setTimeout(displayWelcomeMessage, 500);
+			}
+		}
+		
+		// Display welcome message after page load
+		setTimeout(displayWelcomeMessage, 1000);
+
+		function todayISO(){
+			const d = new Date();
+			return d.toISOString().slice(0,10);
+		}
+
+		document.getElementById('date').value = todayISO();
+
+		// Load records from Firestore or localStorage
+		async function load(){
+			return await FirestoreDB.loadRecords(KEY);
+		}
+
+		// Save records to Firestore and localStorage
+		async function save(records){
+			await FirestoreDB.saveRecords(KEY, records);
+		}
+
+		async function render(){		const isCleared = localStorage.getItem(DISPLAY_CLEARED_KEY) === '1';
+		if(isCleared){
+			recordsBody.innerHTML = '';
+			document.getElementById('records-table').style.display = 'none';
+			emptyEl.style.display = 'block';
+			emptyEl.textContent = 'Display cleared. Click "View Saved Records" to see all records.';
+			document.getElementById('records-summary').textContent = '';
+			return;
+		}			const records = await load();
+			recordsBody.innerHTML = '';
+			const total = records.length;
+			if(records.length === 0){
+				document.getElementById('records-table').style.display = 'none';
+				emptyEl.style.display = 'block';
+				document.getElementById('records-summary').textContent = '';
+				return;
+			}
+			document.getElementById('records-table').style.display = '';
+			emptyEl.style.display = 'none';
+			const maxShow = 10;
+			const shown = Math.min(maxShow, total);
+			records.forEach((r, idx)=>{
+				if(idx >= maxShow) return;
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${escapeHTML(r.BranchCode||'')}</td>
+					<td>${escapeHTML(r.BranchName||'')}</td>
+					<td>${escapeHTML(r.location||'')}</td>
+					<td>${escapeHTML(r.date||'')}</td>
+					<td>${escapeHTML(r.equipment||'')}</td>
+					<td>${escapeHTML(r.task||'')}</td>
+					<td>${escapeHTML(r.status||'')}</td>
+					<td>${escapeHTML(r.performedBy||'')}</td>
+					<td>${escapeHTML(r.verifiedBy||'')}</td>
+					<td>${escapeHTML(r.nextDue||'')}</td>
+					<td>${escapeHTML(r.notes||'')}</td>
+					<td class="actions">
+						<button data-idx="${idx}" class="small" onclick="deleteRecord(${idx})">Delete</button>
+					</td>
+				`;
+				recordsBody.appendChild(tr);
+			});
+			const summaryEl = document.getElementById('records-summary');
+			if(summaryEl){
+				summaryEl.textContent = `Showing ${shown} of ${total} record(s)`;
+				if(total > maxShow){
+					summaryEl.innerHTML += ` — <button id="show-all-inline" style="font-size:12px;margin-left:8px">Show All</button>`;
+					const btn = document.getElementById('show-all-inline');
+					if(btn) btn.addEventListener('click', ()=> window.open('pm_records.html','_blank'));
+				}
+			}
+		}
+
+		function escapeHTML(s){
+			return String(s).replace(/[&<>\\"]/g, c=>({
+				'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"
+			})[c]);
+		}
+
+		async function addRecordFromForm(){
+			const rec = {
+				BranchCode: document.getElementById('BranchCode').value.trim(),
+				BranchName: document.getElementById('BranchName').value.trim(),
+				location: document.getElementById('location').value.trim(),
+				equipment: document.getElementById('equipment').value,
+				task: document.getElementById('task').value.trim(),
+				status: document.getElementById('status').value,
+				date: document.getElementById('date').value || todayISO(),
+				performedBy: document.getElementById('performedBy').value.trim(),
+				verifiedBy: document.getElementById('verifiedBy').value.trim(),
+				nextDue: document.getElementById('nextDue').value || '',
+				notes: document.getElementById('notes').value.trim()
+			};
+			if(!rec.task){ alert('Please provide a task description.'); return; }		localStorage.removeItem(DISPLAY_CLEARED_KEY);			const records = await load();
+			records.unshift(rec);
+			await save(records);
+			await render();
+			form.reset();
+			document.getElementById('date').value = todayISO();
+		}
+
+		async function deleteRecord(i){
+			const records = await load();
+			if(i<0 || i>=records.length) return;
+			if(!confirm('Delete this record?')) return;
+			records.splice(i,1);
+			await save(records); await render();
+		}
+
+		async function exportCSV(){
+			const records = await load();
+			if(records.length===0){ alert('No records to export.'); return; }
+			const header = ['Date','Equipment','Task','Status','PerformedBy','NextDue','Notes'];
+			const rows = [header.join(',')];
+			for(const r of records){
+				const values = header.map(h=>quoteCSV((r[h.toLowerCase()]||'')));
+				rows.push(values.join(','));
+			}
+			const blob = new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url; a.download = 'epm_records.csv'; document.body.appendChild(a); a.click(); a.remove();
+			URL.revokeObjectURL(url);
+		}
+
+		function quoteCSV(v){
+			if(v==null) v='';
+			v = String(v).replace(/"/g,'""');
+			if(/[\",\n]/.test(v)) v='"'+v+'"';
+			return v;
+		}
+
+		function clearAll(){
+			if(!confirm('Clear the displayed records from this page view? (This will not delete saved records)')) return;
+			localStorage.setItem(DISPLAY_CLEARED_KEY, '1');
+			recordsBody.innerHTML = '';
+			document.getElementById('records-table').style.display = 'none';
+			emptyEl.style.display = 'block';
+			document.getElementById('records-summary').textContent = '';
+			showToast('Cleared page display. Records are still saved and can be viewed in "View Saved Records".', 3000, 'info');
+		}
+		
+		async function appendToBackupFile(){
+			const records = await load();
+			if(!records || records.length===0){ alert('No records to save.'); return; }
+
+			function stableStringify(obj){
+				if(obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+				if(Array.isArray(obj)) return '[' + obj.map(stableStringify).join(',') + ']';
+				const keys = Object.keys(obj).sort();
+				return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',') + '}';
+			}
+
+			function mergeArrays(existing, incoming){
+				const seen = new Set(existing.map(r=>stableStringify(r)));
+				const toAdd = [];
+				for(const r of incoming){ const s = stableStringify(r); if(!seen.has(s)){ toAdd.push(r); seen.add(s); } }
+				return existing.concat(toAdd);
+			}
+
+			try{
+				const base = (function(){ try{ return location.href.replace(/[^\/]*$/,''); }catch(e){ return './'; } })();
+				const url = base + 'save_backup';
+				const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(records) });
+				if(resp.ok){
+					alert('Saved backup to server: pm_records_backup/pm_records_backup.json');
+					return;
+				}
+			}catch(e){ console.warn('Server save failed or not available', e); }
+
+			if(window.showDirectoryPicker){
+				try{
+					const dir = await window.showDirectoryPicker();
+					let fileHandle = await dir.getFileHandle('pm_records_backup.json', { create: true });
+					let existing = [];
+					try{ const f = await fileHandle.getFile(); const txt = await f.text(); existing = txt ? JSON.parse(txt) : []; if(!Array.isArray(existing)) existing = [];}catch(e){ existing = []; }
+					const merged = mergeArrays(existing, records);
+					const writable = await fileHandle.createWritable();
+					await writable.write(JSON.stringify(merged, null, 2));
+					await writable.close();
+					const added = merged.length - existing.length;
+					alert('Appended ' + records.length + ' record(s). ' + added + ' new record(s) added to pm_records_backup.json.');
+					return;
+				}catch(e){ console.warn('Directory picker failed or cancelled', e); }
+			}
+
+			if(window.showSaveFilePicker){
+				try{
+					const opts = { suggestedName: 'pm_records_backup.json', types: [{ description: 'JSON', accept: {'application/json':['.json']} }] };
+					const fh = await window.showSaveFilePicker(opts);
+					let existing = [];
+					try{ const f = await fh.getFile(); const txt = await f.text(); existing = txt ? JSON.parse(txt) : []; if(!Array.isArray(existing)) existing=[];}catch(e){ existing = []; }
+					const merged = mergeArrays(existing, records);
+					const w = await fh.createWritable(); await w.write(JSON.stringify(merged, null, 2)); await w.close();
+					const added = merged.length - existing.length;
+					alert('Saved pm_records_backup.json — ' + added + ' new records added.');
+					return;
+				}catch(e){ console.warn('Save file picker failed', e); }
+			}
+
+			try{
+				const base = (function(){ try{ return location.href.replace(/[^\/]*$/,''); }catch(e){ return './'; } })();
+				let existing = [];
+				try{ const resp = await fetch(base + 'pm_records_backup/pm_records_backup.json'); if(resp.ok){ const j = await resp.json(); if(Array.isArray(j)) existing = j; } }catch(e){}
+				const merged = mergeArrays(existing, records);
+				const blob = new Blob([JSON.stringify(merged, null, 2)],{type:'application/json'});
+				const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pm_records_backup.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+				alert('Downloaded merged pm_records_backup.json. Please move it into the pm_records_backup folder on the server.');
+			}catch(e){ alert('Failed to save backup file: ' + e); }
+		}
+
+		document.getElementById('save').addEventListener('click', ()=>{ appendToBackupFile(); });
+
+		async function downloadBackupForOneDrive(){
+			const records = await load();
+			if(!records || records.length===0){ alert('No records to download.'); return; }
+			const now = new Date();
+			const timestamp = now.toISOString().slice(0,19).replace(/:/g,'-');
+			const filename = `epm_backup_${timestamp}.json`;
+			const blob = new Blob([JSON.stringify(records, null, 2)], {type:'application/json'});
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			URL.revokeObjectURL(url);
+			showToast(`Downloaded ${filename}. Upload it to your OneDrive folder.`, 3000, 'info');
+		}
+
+
+
+		const projBtn = document.getElementById('go-project-monitoring');
+		if(projBtn){ projBtn.addEventListener('click', ()=>{ window.open('https://tomsworld-project-tracker.web.app','_blank'); }); }
+
+		const meggerBtn = document.getElementById('go-megger-form');
+		if(meggerBtn){ meggerBtn.addEventListener('click', ()=>{ window.open('megger_test_form.html','_blank'); }); }
+	const loadBalancingBtn = document.getElementById('open-load-balancing');
+	if(loadBalancingBtn){ loadBalancingBtn.addEventListener('click', ()=>{ window.open('load_balancing_form.html','_blank'); }); }
+		function showToast(msg, ms = 1800, type = 'info'){
+			const t = document.getElementById('toast');
+			if(!t) return;
+			t.classList.remove('error','info');
+			if(type === 'error') t.classList.add('error'); else t.classList.add('info');
+			t.textContent = msg; t.setAttribute('aria-hidden','false');
+			t.classList.add('show');
+			clearTimeout(t._timeout);
+			t._timeout = setTimeout(()=>{ t.classList.remove('show'); t.setAttribute('aria-hidden','true'); }, ms);
+		}
+
+		document.getElementById('add-selected').addEventListener('click', ()=>{
+			const checks = Array.from(document.querySelectorAll('#checklist input[type=checkbox]:checked'));
+			if(checks.length===0){ alert('Select at least one checklist item.'); return; }
+			if(checks.length>1){ showToast('Only one Task is Allowed at a Time', 1800, 'error'); return; }
+			const cb = checks[0];
+			document.getElementById('task').value = cb.value;
+			addRecordFromForm();
+		});
+
+		document.getElementById('clear-selected').addEventListener('click', ()=>{
+			document.querySelectorAll('#checklist input[type=checkbox]').forEach(c=>c.checked=false);
+		});
+
+		document.getElementById('add-record').addEventListener('click', addRecordFromForm);
+		document.getElementById('reset-form').addEventListener('click', ()=>{ form.reset(); document.getElementById('date').value = todayISO(); });
+		document.getElementById('export-csv').addEventListener('click', exportCSV);
+		document.getElementById('print').addEventListener('click', ()=>{ window.print(); });
+		document.getElementById('view-saved-records').addEventListener('click', ()=>{ window.open('pm_records.html', '_blank'); });
+		document.getElementById('clear-all').addEventListener('click', clearAll);
+
+		const KEY_BLUR = 'epm_header_blur';
+		const headerEl = document.querySelector('header');
+		const toggleBtn = document.getElementById('toggle-blur');
+
+		function applyHeaderBlur(enabled){
+			if(!headerEl) return;
+			if(enabled){
+				headerEl.classList.remove('no-blur');
+				if(toggleBtn) toggleBtn.textContent = 'Disable Blur';
+			} else {
+				headerEl.classList.add('no-blur');
+				if(toggleBtn) toggleBtn.textContent = 'Enable Blur';
+			}
+			try{ localStorage.setItem(KEY_BLUR, enabled ? '1' : '0'); }catch(e){}
+		}
+
+		try{
+			const saved = localStorage.getItem(KEY_BLUR);
+			applyHeaderBlur(saved !== '0');
+		}catch(e){ applyHeaderBlur(true); }
+
+		if(toggleBtn){
+			function headerToggleHandler(){
+				const currentlyEnabled = !headerEl.classList.contains('no-blur');
+				applyHeaderBlur(!currentlyEnabled);
+			}
+			if(!toggleBtn._blurAttached){ toggleBtn.addEventListener('click', headerToggleHandler); toggleBtn._blurAttached = true; }
+		}
+
+		function showPageError(msg){
+			const el = document.getElementById('page-error');
+			if(el){ el.textContent = msg; el.style.display = 'block'; }
+			console.error(msg);
+		}
+
+		window.addEventListener('error', (ev)=>{
+			try{ showPageError(ev.message + ' — ' + (ev.filename||'') + ':' + (ev.lineno||'') ); }catch(e){console.error(e)}
+		});
+
+		window.addEventListener('unhandledrejection', (ev)=>{
+			try{ showPageError('Unhandled Promise rejection: ' + (ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason))); }catch(e){console.error(e)}
+		});
+
+		window.deleteRecord = deleteRecord;
+		render();
+	</script>
+</body>
+</html>

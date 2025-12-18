@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>Megger / Insulation Resistance Test</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;color:#111;background:url('images/toms_background.png') no-repeat center center fixed;background-size:cover}
+    .page{max-width:1100px;margin:12px auto;padding:12px;background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+    .header-grid{display:grid;grid-template-columns:1fr 360px;gap:12px}
+    .meta{border:1px solid #000;padding:8px}
+    .meta label{display:inline-block;width:120px;font-weight:600}
+    .panel-table{width:100%;border-collapse:collapse;margin-top:12px}
+    .panel-table th,.panel-table td{border:1px solid #000;padding:6px;font-size:12px}
+    .panel-table th{background:#fff}
+    .controls{margin-top:10px;display:flex;gap:8px}
+    .btn{background:#0b78d1;color:#fff;border:0;padding:8px 10px;border-radius:4px;cursor:pointer}
+    .btn.secondary{background:#eee;color:#111;border:1px solid #ccc}
+    .small{font-size:12px;padding:6px}
+    .bottom-sign{display:flex;justify-content:space-between;margin-top:18px}
+    .sign-block{width:45%;}
+    input[type=text], input[type=number], input[type=date], select{padding:6px;border:1px solid #999;width:100%;box-sizing:border-box}
+    .table-scroll{max-height:420px;overflow:auto;border:1px solid #000}
+    .back-home-btn{position:fixed;top:20px;right:20px;z-index:1000;background:#0b78d1;color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;font-weight:600}
+    .back-home-btn:hover{background:#0a6bbf;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+	@media (max-width:768px){
+		.page{margin:8px auto;padding:8px;font-size:12px}
+		h2{font-size:16px}
+		.header-grid{grid-template-columns:1fr;gap:8px}
+		.meta{padding:6px}
+		.meta label{width:100px;font-size:11px}
+		.meta input{font-size:11px;padding:4px}
+		.controls{flex-wrap:wrap;gap:4px}
+		.btn{padding:6px 8px;font-size:11px}
+		.panel-table{font-size:11px;min-width:1200px}
+		.panel-table th,.panel-table td{padding:6px;font-size:11px;min-width:80px}
+		.panel-table input{padding:6px;font-size:11px;min-width:70px}
+		.table-scroll{max-height:300px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+		.bottom-sign{flex-direction:column;gap:12px}
+		.sign-block{width:100%}
+		#circuitType{width:100%;font-size:11px}
+		.back-home-btn{top:10px;right:10px;padding:8px 12px;font-size:11px}
+	}    @media print{ .controls,.add-row-btn,.back-home-btn{display:none} }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+  <button class="back-home-btn" onclick="window.location.href='index.html'">← Back to Home Page</button>
+  <div class="page">
+				<h2>MEGGER TEST RESULT / INSULATION TEST</h2>
+				<div class="header-grid">
+					<div class="meta">
+						<div><label>Company Name:</label><input id="company" type="text" placeholder="Company" /></div>
+						<div style="margin-top:6px"><label>Location:</label><input id="location" type="text" placeholder="Location" /></div>
+						<div style="margin-top:6px"><label>Subject:</label><input id="subject" type="text" value="MEGGER TEST RESULT / INSULATION TEST" /></div>
+					</div>
+					<div class="meta">
+						<div><label>Date:</label><input id="testDate" type="date" /></div>
+						<div style="margin-top:6px"><label>Time:</label><input id="testTime" type="text" placeholder="HH:MM" /></div>
+						<div style="margin-top:6px"><label>Test Voltage:</label><input id="testVoltage" type="text" placeholder="V" /></div>					<div style="margin-top:6px"><label>Reference No:</label><input id="referenceNo" type="text" placeholder="REF-001" /></div>				</div>
+			</div>
+
+			<div style="margin-top:12px">
+				<label style="font-weight:600;margin-bottom:6px;display:block">Select Type of Circuit:</label>
+				<select id="circuitType" style="padding:8px;border:1px solid #000;width:300px">
+					<option value="3phase-delta">Three Phase Delta</option>
+					<option value="3phase-wye">Three Phase Wye</option>
+					<option value="1phase-ll">Single Phase Line to Line</option>
+					<option value="1phase-ln">Single Phase Line to Neutral</option>
+				</select>
+			</div>
+
+		<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+			<div><strong>PANEL / BRANCH CIRCUIT READINGS</strong></div>
+				<div class="controls">
+					<button id="add-row" class="btn small">Add Row</button>
+					<button id="remove-row" class="btn small secondary">Remove Row</button>
+					<button id="save-test" class="btn small">Save Test</button>
+					<button id="download-csv" class="btn small secondary">Download CSV</button>
+					<button id="print-report" class="btn small">Print Report</button>
+				</div>
+			</div>
+
+			<div class="table-scroll">
+					<table class="panel-table" id="panelTable">
+						<thead>
+							<tr>
+								<th>PANEL</th>
+								<th>BRANCH CKT #</th>
+								<th>L1-L2</th>
+								<th>L1-L3</th>
+								<th>L2-L3</th>
+								<th>L1-N</th>
+								<th>L2-N</th>
+								<th>L3-N</th>
+								<th>L1-G</th>
+								<th>L2-G</th>
+								<th>L3-G</th>
+								<th>N-G</th>
+								<th>SIZE &amp; TYPE OF WIRE</th>
+								<th>REMARKS</th>
+							</tr>
+						</thead>
+						<tbody id="panelBody">
+							<!-- rows inserted here -->
+						</tbody>
+					</table>
+				</div>
+
+				<div class="bottom-sign">
+					<div class="sign-block">
+						<div>CONDUCTED BY:</div>
+						<div style="height:48px"></div>
+						<div><input id="conductedBy" type="text" placeholder="Electrician/Technician" /></div>
+					</div>
+					<div class="sign-block">
+						<div>WITNESSED BY:</div>
+						<div style="height:48px"></div>
+						<div><input id="witnessedBy" type="text" placeholder="Representative" /></div>
+					</div>
+                    <div class="sign-block">
+						<div>VERIFIED BY:</div>
+						<div style="height:48px"></div>
+						<div><input id="verifiedBy" type="text" placeholder="Electrical Engineer" /></div>
+					</div>
+				</div>
+			</div>
+
+			<script>
+				const STORAGE_KEY = 'megger_tests_v2';
+
+				function loadTests(){ try{ const r = localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):[] }catch(e){return[]} }
+				function saveTests(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+			function generateReferenceNumber(){
+				const now = new Date();
+			const date = now.toISOString().slice(0,10).replace(/-/g,'');
+			const time = now.toTimeString().slice(0,8).replace(/:/g,'');
+			return `MTR${date}${time}`;
+			}
+			
+			function makeRow(){
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+				<td><input class="panel-name" type="text" /></td>
+				<td><input class="branch-ckt" type="text" /></td>
+				<td><input class="v l1l2" type="number" step="0.01" /></td>
+				<td><input class="v l1l3" type="number" step="0.01" /></td>
+				<td><input class="v l2l3" type="number" step="0.01" /></td>
+				<td><input class="v l1n" type="number" step="0.01" /></td>
+				<td><input class="v l2n" type="number" step="0.01" /></td>
+				<td><input class="v l3n" type="number" step="0.01" /></td>
+				<td><input class="v l1g" type="number" step="0.01" /></td>
+				<td><input class="v l2g" type="number" step="0.01" /></td>
+				<td><input class="v l3g" type="number" step="0.01" /></td>
+				<td><input class="v ng" type="number" step="0.01" /></td>
+				<td><input class="wire" type="text" /></td>
+				<td><input class="remarks" type="text" /></td>
+			`;
+			return tr;
+		}
+
+		function applyCircuitTypeRules(){
+			const type = document.getElementById('circuitType').value;
+			let disableClasses = [];
+			
+			if(type === '3phase-delta'){
+				// Three Phase Delta: Disable L1-N, L2-N, L3-N, N-G
+				disableClasses = ['l1n', 'l2n', 'l3n', 'ng'];
+			} else if(type === '1phase-ll'){
+				// Single Phase Line to Line: Enable L1-L2, L1-G, L2-G only
+				disableClasses = ['l1l3', 'l2l3', 'l1n', 'l2n', 'l3n', 'l3g', 'ng'];
+			} else if(type === '1phase-ln'){
+				// Single Phase Line to Neutral: Enable L1-N, L1-G, N-G only
+				disableClasses = ['l1l2', 'l1l3', 'l2l3', 'l2n', 'l3n', 'l2g', 'l3g'];
+			} else if(type === '3phase-wye'){
+				// Three Phase Wye: Enable all fields
+				disableClasses = [];
+			}
+			
+			// First enable all fields
+			document.querySelectorAll('#panelBody input.v').forEach(inp => {
+				inp.disabled = false;
+				inp.style.background = '';
+			});
+		
+		disableClasses.forEach(cls => {
+			if(cls){
+				document.querySelectorAll('#panelBody input.v.'+cls).forEach(inp => {
+					inp.disabled = true;
+					inp.value = '';
+					inp.style.background = '#e0e0e0';
+				});
+			}
+		});
+	}
+
+	function getFormData(){
+		const rows = [];
+		document.querySelectorAll('#panelBody tr').forEach(tr=>{
+			const obj = {
+				panel: tr.querySelector('.panel-name').value.trim(),
+				branch: tr.querySelector('.branch-ckt').value.trim(),
+				'L1-L2': tr.querySelector('.l1l2').value || '',
+				'L1-L3': tr.querySelector('.l1l3').value || '',
+				'L2-L3': tr.querySelector('.l2l3').value || '',
+				'L1-N': tr.querySelector('.l1n').value || '',
+				'L2-N': tr.querySelector('.l2n').value || '',
+				'L3-N': tr.querySelector('.l3n').value || '',
+				'L1-G': tr.querySelector('.l1g').value || '',
+				'L2-G': tr.querySelector('.l2g').value || '',
+				'L3-G': tr.querySelector('.l3g').value || '',
+				'N-G': tr.querySelector('.ng').value || '',
+				wire: tr.querySelector('.wire').value || '',
+				remarks: tr.querySelector('.remarks').value || ''
+			};
+			const any = Object.values(obj).some(v=>v!="");
+			if(any) rows.push(obj);
+		});
+		return {
+			company: document.getElementById('company').value.trim(),
+			location: document.getElementById('location').value.trim(),
+			subject: document.getElementById('subject').value.trim(),
+			date: document.getElementById('testDate').value || new Date().toISOString().slice(0,10),
+			time: document.getElementById('testTime').value || '',
+			testVoltage: document.getElementById('testVoltage').value || '',
+			referenceNo: document.getElementById('referenceNo').value.trim(),
+			circuitType: document.getElementById('circuitType').value,
+			rows: rows,
+			conductedBy: document.getElementById('conductedBy').value.trim(),
+			witnessedBy: document.getElementById('witnessedBy').value.trim(),
+			verifiedBy: document.getElementById('verifiedBy').value.trim(),
+			createdAt: new Date().toISOString()
+		};
+	}
+
+	function saveTest(){
+		const rec = getFormData();
+		const arr = loadTests(); 
+		arr.push(rec); 
+		saveTests(arr); 
+		alert('Saved test.');
+	}
+
+	function buildCSV(records){
+		const BOM = '\uFEFF';
+		const hdr = ['Date','Company','Location','Panel','Branch','L1-L2','L1-L3','L2-L3','L1-N','L2-N','L3-N','L1-G','L2-G','L3-G','N-G','Wire','Remarks','ConductedBy','WitnessedBy','VerifiedBy'];
+		const lines = [hdr.map(h=>`"${h.replace(/"/g,'""')}"`).join(',')];
+		records.forEach(r=>{
+			(r.rows||[]).forEach(row=>{
+				const vals = [r.date||'', r.company||'', r.location||'', row.panel||'', row.branch||'', row['L1-L2']||'', row['L1-L3']||'', row['L2-L3']||'', row['L1-N']||'', row['L2-N']||'', row['L3-N']||'', row['L1-G']||'', row['L2-G']||'', row['L3-G']||'', row['N-G']||'', row.wire||'', row.remarks||'', r.conductedBy||'', r.witnessedBy||'', r.verifiedBy||''];
+				lines.push(vals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+			});
+		});
+		return BOM + lines.join('\r\n');
+	}
+
+	function renderPrintable(r){
+				function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+				let rowsHtml = '';
+				(r.rows||[]).forEach(row=>{
+					rowsHtml += `<tr><td>${esc(row.panel)}</td><td>${esc(row.branch)}</td><td>${esc(row['L1-L2'])}</td><td>${esc(row['L1-L3'])}</td><td>${esc(row['L2-L3'])}</td><td>${esc(row['L1-N'])}</td><td>${esc(row['L2-N'])}</td><td>${esc(row['L3-N'])}</td><td>${esc(row['L1-G'])}</td><td>${esc(row['L2-G'])}</td><td>${esc(row['L3-G'])}</td><td>${esc(row['N-G'])}</td><td>${esc(row.wire)}</td><td>${esc(row.remarks)}</td></tr>`;
+				});
+				const html = `<!doctype html><html><head><meta charset="utf-8"><title>Megger Test Print</title><style>body{font-family:Arial;padding:10px}.report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}.reference-no{text-align:right;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:6px;text-align:left}th{background:#f4f4f4}</style></head><body>`+
+					`<div class="report-header"><div><h3 style="margin:0">Megger Test Report</h3><div><strong>Company:</strong> ${esc(r.company)} &nbsp;&nbsp; <strong>Location:</strong> ${esc(r.location)}</div><div><strong>Date:</strong> ${esc(r.date)} &nbsp;&nbsp; <strong>Voltage:</strong> ${esc(r.testVoltage)}</div></div><div class="reference-no">${r.referenceNo ? 'REF NO: ' + esc(r.referenceNo) : ''}</div></div>`+
+					`<table><thead><tr><th>PANEL</th><th>BRANCH CKT #</th><th>L1-L2</th><th>L1-L3</th><th>L2-L3</th><th>L1-N</th><th>L2-N</th><th>L3-N</th><th>L1-G</th><th>L2-G</th><th>L3-G</th><th>N-G</th><th>WIRE</th><th>REMARKS</th></tr></thead><tbody>${rowsHtml}</tbody></table>`+
+				`<div style="margin-top:20px"><strong>Conducted By:</strong> ${esc(r.conductedBy)} &nbsp;&nbsp; <strong>Witnessed By:</strong> ${esc(r.witnessedBy)} &nbsp;&nbsp; <strong>Verified By:</strong> ${esc(r.verifiedBy)}</div><scr`+`ipt>window.print()</scr`+`ipt></body></html>`;
+		return html;
+	}
+
+	// Initialize on page load
+	document.addEventListener('DOMContentLoaded', function(){
+		const panelBody = document.getElementById('panelBody');
+		
+		function addRow(){ 
+			panelBody.appendChild(makeRow()); 
+			applyCircuitTypeRules(); 
+		}
+		
+		function removeRow(){ 
+			if(panelBody.lastElementChild) panelBody.removeChild(panelBody.lastElementChild); 
+		}
+		
+		// Set initial reference number
+		document.getElementById('referenceNo').value = generateReferenceNumber();
+		
+		// Set today's date
+		const today = new Date().toISOString().slice(0,10);
+		document.getElementById('testDate').value = today;
+		
+		// Add event listeners
+		document.getElementById('add-row').addEventListener('click', ()=> addRow());
+		document.getElementById('remove-row').addEventListener('click', ()=> removeRow());
+		document.getElementById('circuitType').addEventListener('change', applyCircuitTypeRules);
+		document.getElementById('save-test').addEventListener('click', saveTest);
+		document.getElementById('download-csv').addEventListener('click', ()=>{
+			const rec = getFormData();
+			const csv = buildCSV([rec]);
+			const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+			const a = document.createElement('a'); 
+			a.href = URL.createObjectURL(blob); 
+			a.download = `megger_${rec.date||new Date().toISOString().slice(0,10)}.csv`; 
+			document.body.appendChild(a); 
+			a.click(); 
+			a.remove(); 
+			URL.revokeObjectURL(a.href);
+		});
+		document.getElementById('print-report').addEventListener('click', ()=>{
+			const rec = getFormData();
+			// Auto-generate reference number for print
+			rec.referenceNo = generateReferenceNumber();
+			const html = renderPrintable(rec);
+			const blob = new Blob([html],{type:'text/html'});
+			const url = URL.createObjectURL(blob);
+			const w = window.open(url, '_blank');
+			setTimeout(()=> URL.revokeObjectURL(url), 2000);
+		});
+		
+		// Initialize with 12 empty rows
+		for(let i=0;i<12;i++) addRow();
+		
+		// Apply initial circuit type rules
+		applyCircuitTypeRules();
+	});
+	</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>3-Phase Load Balancing</title>
+  <style>
+    :root{--bg:#f4f6f8;--card:#fff;--accent:#0b78d1;--muted:#6b7280}
+    body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:#111}
+    .container{max-width:1000px;margin:28px auto;padding:18px}
+    h1{margin:0 0 8px;font-size:20px}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:18px}
+    .card{background:var(--card);padding:12px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+    label{display:block;font-size:13px;margin-top:8px;color:var(--muted)}
+    input[type=text],input[type=number],select{width:100%;padding:8px;border:1px solid #e6e9ee;border-radius:6px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:8px;border-bottom:1px solid #eef1f4;text-align:left;font-size:13px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    button{background:var(--accent);color:#fff;border:0;padding:8px 10px;border-radius:6px;cursor:pointer}
+    button.secondary{background:#eef3fb;color:var(--accent);border:1px solid rgba(11,120,209,0.12)}
+    .muted{color:var(--muted);font-size:13px}
+    .bars{display:flex;gap:8px;align-items:end;height:140px;padding:12px;border-radius:6px;background:#fff}
+    .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px;border-radius:6px}
+    .bar .fill{width:60%;background:linear-gradient(180deg,var(--accent),#0b78d1);border-radius:6px}
+    .bar .label{margin-top:8px;font-size:13px}
+    .summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+    .summary .item{background:#fff;padding:10px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.04);min-width:120px}
+    .hint{font-size:13px;color:#666;margin-top:8px}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}}	@media (max-width:600px){
+		.container{margin:12px auto;padding:10px}
+		h1{font-size:16px}
+		.muted{font-size:11px}
+		.card{padding:10px}
+		label{font-size:12px}
+		input[type=text],input[type=number],select{padding:6px;font-size:12px}
+		button{padding:6px 8px;font-size:12px}
+		table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:11px}
+		th,td{padding:6px;font-size:11px}
+		.bars{height:100px;padding:8px}
+		.bar .label{font-size:11px}
+		.summary{gap:8px}
+		.summary .item{padding:8px;min-width:100px;font-size:11px}
+	}  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>3-Phase Load Balancing</h1>
+    <p class="muted">Add circuit loads and assign them to Phase A / B / C. The tool shows totals per phase, imbalance percentage and suggests transfers to reduce imbalance.</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2 style="margin-top:0">Add Load</h2>
+        <label for="load-name">Load name</label>
+        <input id="load-name" type="text" placeholder="Circuit number or description e.g. #1" />
+        <label for="load-value">Load value (kW)</label>
+        <input id="load-value" type="number" step="0.01" placeholder="kW" />
+        <label for="load-phase">Phase</label>
+        <select id="load-phase">
+          <option value="A">Phase A</option>
+          <option value="B">Phase B</option>
+          <option value="C">Phase C</option>
+        </select>
+
+        <div class="toolbar">
+          <button id="add-load">Add Load</button>
+          <button id="reset-form" class="secondary">Reset</button>
+          <button id="export-csv" class="secondary">Export CSV</button>
+          <button id="import-csv" class="secondary">Import CSV</button>
+        </div>
+
+        <div class="hint">Tip: Enter loads in kW. Use the suggestions box to rebalance by reassigning loads.</div>
+
+        <h3 style="margin-top:14px">Loads</h3>
+        <div style="overflow:auto;max-height:260px">
+          <table aria-live="polite">
+            <thead>
+              <tr><th>Load</th><th>kW</th><th>Phase</th><th></th></tr>
+            </thead>
+            <tbody id="loads-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h2 style="margin-top:0">Summary</h2>
+        <div class="bars" aria-hidden="false">
+          <div class="bar"><div id="barA" class="fill" style="height:10%"></div><div class="label">A: <span id="totA">0</span> kW</div></div>
+          <div class="bar"><div id="barB" class="fill" style="height:10%"></div><div class="label">B: <span id="totB">0</span> kW</div></div>
+          <div class="bar"><div id="barC" class="fill" style="height:10%"></div><div class="label">C: <span id="totC">0</span> kW</div></div>
+        </div>
+
+        <div class="summary">
+          <div class="item"><strong>Total</strong><div id="total-all">0 kW</div></div>
+          <div class="item"><strong>Average</strong><div id="avg-all">0 kW</div></div>
+          <div class="item"><strong>Imbalance</strong><div id="imbalance">0 %</div></div>
+        </div>
+
+        <h3 style="margin-top:14px">Suggestions</h3>
+        <div id="suggestions" class="hint">No suggestions yet — add some loads.</div>
+
+        <div style="margin-top:12px" class="toolbar">
+          <button id="apply-suggestion" class="secondary">Apply First Suggestion</button>
+          <button id="clear-all" class="secondary">Clear All</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <input id="csv-file" type="file" accept="text/csv" style="display:none" />
+
+  <script>
+    const LB_KEY = 'epm_load_balancing_v1';
+    let loads = load();
+
+    function load(){ try{ const raw = localStorage.getItem(LB_KEY); return raw ? JSON.parse(raw) : []; }catch(e){console.error(e); return []} }
+    function save(){ try{ localStorage.setItem(LB_KEY, JSON.stringify(loads)); }catch(e){console.error(e);} }
+
+    function renderLoads(){
+      const body = document.getElementById('loads-body'); body.innerHTML = '';
+      loads.forEach((l, i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHTML(l.name)}</td><td>${Number(l.value).toFixed(2)}</td><td>${l.phase}</td><td><button data-i="${i}">Delete</button></td>`;
+        body.appendChild(tr);
+        tr.querySelector('button').addEventListener('click', ()=>{ loads.splice(i,1); save(); renderLoads(); compute(); });
+      });
+    }
+
+    function escapeHTML(s){ return String(s||'').replace(/[&<>\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function addLoad(){
+      const name = document.getElementById('load-name').value.trim();
+      const v = parseFloat(document.getElementById('load-value').value || '0');
+      const phase = document.getElementById('load-phase').value;
+      if(!name || isNaN(v) || v<=0){ alert('Provide a valid name and positive load value.'); return; }
+      loads.unshift({name, value: Number(v), phase});
+      save(); renderLoads(); compute();
+      document.getElementById('load-name').value=''; document.getElementById('load-value').value='';
+    }
+
+    function compute(){
+      const totals = {A:0,B:0,C:0};
+      loads.forEach(l=> totals[l.phase] += Number(l.value));
+      const A = totals.A, B = totals.B, C = totals.C;
+      const total = A+B+C; const avg = total/3;
+      document.getElementById('totA').textContent = A.toFixed(2);
+      document.getElementById('totB').textContent = B.toFixed(2);
+      document.getElementById('totC').textContent = C.toFixed(2);
+      document.getElementById('total-all').textContent = total.toFixed(2)+' kW';
+      document.getElementById('avg-all').textContent = avg.toFixed(2)+' kW';
+      const maxDev = Math.max(Math.abs(A-avg),Math.abs(B-avg),Math.abs(C-avg));
+      const imbalance = avg>0 ? (maxDev/avg*100) : 0;
+      document.getElementById('imbalance').textContent = imbalance.toFixed(1)+' %';
+
+      // update bars (scale by largest phase or total)
+      const max = Math.max(A,B,C,1);
+      document.getElementById('barA').style.height = Math.round((A/max)*100) + '%';
+      document.getElementById('barB').style.height = Math.round((B/max)*100) + '%';
+      document.getElementById('barC').style.height = Math.round((C/max)*100) + '%';
+
+      // compute suggestions: greedy moves from highest phase to lowest phase
+      const phases = [{id:'A',v:A},{id:'B',v:B},{id:'C',v:C}].sort((x,y)=>y.v-x.v);
+      const suggestions = [];
+      // attempt to reduce difference by moving individual loads
+      // consider loads in the heaviest phase sorted by descending value
+      const heavy = phases[0].id, light = phases[2].id;
+      const heavyLoads = loads.filter(l=>l.phase===heavy).slice().sort((a,b)=>b.value-a.value);
+      let curTotals = {A:totals.A,B:totals.B,C:totals.C};
+      for(const candidate of heavyLoads){
+        const from = candidate.phase; const to = light;
+        const newTotals = Object.assign({}, curTotals);
+        newTotals[from] -= candidate.value; newTotals[to] += candidate.value;
+        const newMax = Math.max(newTotals.A,newTotals.B,newTotals.C);
+        const newMin = Math.min(newTotals.A,newTotals.B,newTotals.C);
+        if((newMax - newMin) < (Math.max(curTotals.A,curTotals.B,curTotals.C) - Math.min(curTotals.A,curTotals.B,curTotals.C))){
+          suggestions.push({name:candidate.name, value:candidate.value, from, to});
+          curTotals = newTotals;
+        }
+        if(suggestions.length>=5) break;
+      }
+
+      const sugEl = document.getElementById('suggestions');
+      if(suggestions.length===0){ sugEl.textContent = 'No simple single-load moves would noticeably reduce imbalance. Consider manual reassignments.'; }
+      else{
+        sugEl.innerHTML = '';
+        suggestions.forEach((s,i)=>{
+          const d = document.createElement('div'); d.className='hint';
+          d.innerHTML = `${i+1}. Move <strong>${escapeHTML(s.name)}</strong> (${s.value} kW) from ${s.from} → ${s.to}`;
+          sugEl.appendChild(d);
+        });
+      }
+    }
+
+    // apply the first suggestion by reassigning that load
+    function applyFirstSuggestion(){
+      const totals = {A:0,B:0,C:0}; loads.forEach(l=> totals[l.phase]+=l.value);
+      const phases = [{id:'A',v:totals.A},{id:'B',v:totals.B},{id:'C',v:totals.C}].sort((x,y)=>y.v-x.v);
+      const heavy = phases[0].id, light = phases[2].id;
+      const heavyLoads = loads.filter(l=>l.phase===heavy).slice().sort((a,b)=>b.value-a.value);
+      if(heavyLoads.length===0){ alert('No load available to move'); return; }
+      const candidate = heavyLoads[0];
+      const idx = loads.findIndex(l=> l.name===candidate.name && l.value===candidate.value && l.phase===candidate.phase);
+      if(idx>=0){ loads[idx].phase = light; save(); renderLoads(); compute(); }
+    }
+
+    // CSV export / import
+    function exportCSV(){
+      const header = ['name','value','phase'];
+      const rows = [header.join(',')];
+      loads.forEach(l=> rows.push([`"${String(l.name).replace(/"/g,'""') }"`, l.value, l.phase].join(',')));
+      const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'load_balancing.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    }
+
+    function importCSVFile(file){
+      const reader = new FileReader();
+      reader.onload = e=>{
+        const text = e.target.result.replace(/\r/g,'');
+        const lines = text.split('\n').map(s=>s.trim()).filter(Boolean);
+        if(lines.length<=1) return alert('No data found');
+        lines.shift();
+        const imported = [];
+        lines.forEach(line=>{
+          const parts = line.split(',');
+          if(parts.length<3) return;
+          let name = parts[0].replace(/^"|"$/g,'').trim();
+          const value = parseFloat(parts[1]);
+          const phase = (parts[2]||'').trim().toUpperCase();
+          if(!isNaN(value) && ['A','B','C'].includes(phase)) imported.push({name, value, phase});
+        });
+        if(imported.length){ loads = imported.concat(loads); save(); renderLoads(); compute(); }
+      };
+      reader.readAsText(file);
+    }
+
+    // event wiring
+    document.getElementById('add-load').addEventListener('click', addLoad);
+    document.getElementById('reset-form').addEventListener('click', ()=>{ document.getElementById('load-name').value=''; document.getElementById('load-value').value=''; });
+    document.getElementById('export-csv').addEventListener('click', exportCSV);
+    document.getElementById('import-csv').addEventListener('click', ()=> document.getElementById('csv-file').click());
+    document.getElementById('csv-file').addEventListener('change', (ev)=>{ const f = ev.target.files[0]; if(f) importCSVFile(f); ev.target.value=''; });
+    document.getElementById('apply-suggestion').addEventListener('click', applyFirstSuggestion);
+    document.getElementById('clear-all').addEventListener('click', ()=>{ if(!confirm('Clear all loads?')) return; loads = []; save(); renderLoads(); compute(); });
+
+    // initial render
+    renderLoads(); compute();
+  </script>
+</body>
+</html>
