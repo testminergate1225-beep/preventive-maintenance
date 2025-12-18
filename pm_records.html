@@ -85,6 +85,8 @@
 
 			let html = '<table><thead><tr>';
 			html += '<th>Date</th>';
+			html += '<th>Branch Code</th>';
+			html += '<th>Branch Name</th>';
 			html += '<th>Equipment</th>';
 			html += '<th>Location</th>';
 			html += '<th>Task</th>';
@@ -98,6 +100,8 @@
 			records.forEach(rec => {
 				html += '<tr>';
 				html += `<td>${escapeHTML(rec.date || '')}</td>`;
+				html += `<td>${escapeHTML(rec.branchCode || '')}</td>`;
+				html += `<td>${escapeHTML(rec.branchName || '')}</td>`;
 				html += `<td>${escapeHTML(rec.equipment || '')}</td>`;
 				html += `<td>${escapeHTML(rec.location || '')}</td>`;
 				html += `<td>${escapeHTML(rec.task || '')}</td>`;
@@ -137,12 +141,14 @@
 				return;
 			}
 
-			const headers = ['Date','Equipment','Location','Task','Status','Performed By','Verified By','Next Due','Notes'];
+			const headers = ['Date','Branch Code','Branch Name','Equipment','Location','Task','Status','Performed By','Verified By','Next Due','Notes'];
 			let csv = headers.join(',') + '\n';
 
 			records.forEach(rec => {
 				const row = [
 					rec.date || '',
+					rec.BranchCode || '',
+					rec.BranchName || '',
 					rec.equipment || '',
 					rec.location || '',
 					rec.task || '',
@@ -292,6 +298,8 @@
 			newRecords.forEach(newRec => {
 				const isDup = existing.some(e => 
 					e.date === newRec.date &&
+					e.BranchCode === newRec.BranchCode &&
+					e.BranchName === newRec.BranchName &&
 					e.equipment === newRec.equipment &&
 					e.task === newRec.task &&
 					e.performedBy === newRec.performedBy
