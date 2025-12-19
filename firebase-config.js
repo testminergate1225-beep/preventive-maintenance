@@ -2,14 +2,14 @@
 // Configuration loaded from environment variables
 
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
-  measurementId: ""
+  apiKey: "FIREBASE_API_KEY = AIzaSyDJOuYk3sUoQkkqX4tH3e8P9Gh1kXBRJ8A",
+  authDomain: "FIREBASE_AUTH_DOMAIN = preventive-maintenance-2b1b7.firebaseapp.com",
+  databaseURL: "FIREBASE_DATABASE_URL = https://preventive-maintenance-2b1b7-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "FIREBASE_PROJECT_ID = preventive-maintenance-2b1b7",
+  storageBucket: "FIREBASE_STORAGE_BUCKET = preventive-maintenance-2b1b7.firebasestorage.app",
+  messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID = 781770447532",
+  appId: "FIREBASE_APP_ID = 1:781770447532:web:5f90c90bfcde2e2ca51d09",
+  measurementId: "FIREBASE_MEASUREMENT_ID = G-P8QLRSSNXY"
 };
 
 // Initialize Firebase
