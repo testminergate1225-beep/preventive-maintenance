@@ -84,6 +84,8 @@
 			emptyEl.style.display = 'none';
 
 			let html = '<table><thead><tr>';
+			html += '<th>Branch Code</th>';
+			html += '<th>Branch Name</th>';
 			html += '<th>Date</th>';
 			html += '<th>Equipment</th>';
 			html += '<th>Location</th>';
@@ -97,6 +99,8 @@
 
 			records.forEach(rec => {
 				html += '<tr>';
+				html += `<td>${escapeHTML(rec.BranchCode || '')}</td>`;
+				html += `<td>${escapeHTML(rec.BranchName || '')}</td>`;
 				html += `<td>${escapeHTML(rec.date || '')}</td>`;
 				html += `<td>${escapeHTML(rec.equipment || '')}</td>`;
 				html += `<td>${escapeHTML(rec.location || '')}</td>`;
