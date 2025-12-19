@@ -150,6 +150,8 @@
             <button id="lb-export" class="ghost">Export CSV</button>
             <button id="lb-import" class="ghost">Import CSV</button>
             <button id="print-form" class="ghost">Printable Form</button>
+            <button id="save-printable" class="ghost">Save</button>
+            <button id="view-save" class="ghost" onclick="window.location.href='load_balancing_records.html'">View Saved Forms</button>
           </div>
 
           <h3 style="margin-top:12px">Loads</h3>
@@ -257,6 +259,70 @@
   </div>
 
   <script>
+        // --- Save Printable Form Record ---
+        document.addEventListener('DOMContentLoaded', function() {
+          const saveBtn = document.getElementById('save-printable');
+          if(saveBtn) saveBtn.addEventListener('click', savePrintableRecord);
+        });
+
+        async function savePrintableRecord() {
+          // Gather ALL user input fields and loads
+          const date = new Date().toLocaleDateString();
+          const time = new Date().toLocaleTimeString();
+          const refId = 'LB-' + new Date().getFullYear() + String(new Date().getMonth()+1).padStart(2,'0') + String(new Date().getDate()).padStart(2,'0') + '-' + String(new Date().getHours()).padStart(2,'0') + String(new Date().getMinutes()).padStart(2,'0') + String(new Date().getSeconds()).padStart(2,'0');
+          const branch = document.getElementById('branch-code')?.value || '';
+          const company = document.getElementById('company-name')?.value || '';
+          const location = document.getElementById('location-name')?.value || '';
+          const panel = document.getElementById('panel-board')?.value || '';
+          const mcb = document.getElementById('mcb-capacity')?.value || '';
+          const mainV = document.getElementById('main-voltage')?.value || '';
+          const wires = document.getElementById('wire-size')?.value || '';
+          const conductedBy = document.getElementById('conducted-by')?.value || '';
+          const witnessBy = document.getElementById('witness-by')?.value || '';
+          const remarks = document.getElementById('remarks-input')?.value || '';
+          const circType = document.getElementById('circuit-type')?.value || '';
+          const vll = document.getElementById('v-line-line')?.value || '';
+          const vln = document.getElementById('v-line-neutral')?.value || '';
+          const vph = document.getElementById('v-phase')?.value || '';
+          // Full test section
+          const nameplate = document.getElementById('nameplate-power')?.value || '';
+          const meas_van = document.getElementById('meas-van')?.value || '';
+          const meas_vbn = document.getElementById('meas-vbn')?.value || '';
+          const meas_vcn = document.getElementById('meas-vcn')?.value || '';
+          const meas_ia = document.getElementById('meas-ia')?.value || '';
+          const meas_ib = document.getElementById('meas-ib')?.value || '';
+          const meas_ic = document.getElementById('meas-ic')?.value || '';
+          const pf_a = document.getElementById('pf-a')?.value || '';
+          const pf_b = document.getElementById('pf-b')?.value || '';
+          const pf_c = document.getElementById('pf-c')?.value || '';
+          // Summary
+          const phaseA = document.getElementById('sumA')?.textContent?.replace(/[^\d.\-]/g,'') || '';
+          const phaseB = document.getElementById('sumB')?.textContent?.replace(/[^\d.\-]/g,'') || '';
+          const phaseC = document.getElementById('sumC')?.textContent?.replace(/[^\d.\-]/g,'') || '';
+          const totalLoad = document.getElementById('sumTotal')?.textContent?.replace(/[^\d.\-]/g,'') || '';
+          // Save the full loads array
+          let loadsArr = [];
+          try {
+            loadsArr = Array.isArray(loads) ? JSON.parse(JSON.stringify(loads)) : [];
+          } catch(e) { loadsArr = []; }
+
+          const record = {
+            date, time, refId, branch, company, location, panel, mcb, mainV, wires, conductedBy, witnessBy, remarks, circType, vll, vln, vph,
+            nameplate, meas_van, meas_vbn, meas_vcn, meas_ia, meas_ib, meas_ic, pf_a, pf_b, pf_c,
+            phaseA, phaseB, phaseC, totalLoad,
+            loads: loadsArr
+          };
+          const LB_KEY = 'epm_load_balancing_v1';
+          try {
+            let records = await FirestoreDB.loadRecords(LB_KEY);
+            if(!Array.isArray(records)) records = [];
+            records.unshift(record);
+            await FirestoreDB.saveRecords(LB_KEY, records);
+            alert('Printable form saved! You can view it in the records list.');
+          } catch(e) {
+            alert('Failed to save record: ' + (e?.message||e));
+          }
+        }
     // Simple client-side load balancer + full load test
     const STORAGE_KEY = 'epm_load_balancer_form_v1';
     let loads = [];

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>Load Balancing - Printable Records</title>
+  <style>
+    body{font-family:Segoe UI,system-ui,-apple-system,'Helvetica Neue',Arial;margin:0;background:#f4f6f8;color:#111;padding:0}
+    .container{max-width:1100px;margin:30px auto;padding:18px}
+    h1{font-size:22px;margin-bottom:8px;color:#0b78d1}
+    .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    button{background:#0b78d1;color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s}
+    button:hover{opacity:0.9;transform:translateY(-1px)}
+    button.secondary{background:#e5e7eb;color:#111}
+    .card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:20px;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}
+    th{background:#f3f4f6;font-weight:600;position:sticky;top:0}
+    tr:hover{background:#f9fafb}
+    .empty{text-align:center;color:#6b7280;padding:40px;font-size:14px}
+    @media (max-width:768px){
+      .container{padding:8px}
+      h1{font-size:17px}
+      .toolbar{gap:6px}
+      button{padding:8px 12px;font-size:12px}
+      .card{padding:12px}
+      table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:11px}
+      th,td{padding:6px;white-space:nowrap}
+    }
+    @media print{.toolbar,button{display:none}}
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Load Balancing - Printable Records</h1>
+    <div class="toolbar">
+      <button onclick="window.location.href='load_balancing_form.html'">+ Add New Printable Form</button>
+      <button onclick="print()">Print List</button>
+      <button class="secondary" onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
+    <div class="card">
+      <div id="table-container"></div>
+      <div id="empty" class="empty" style="display:none">No printable records found. Add a new one from the form page.</div>
+    </div>
+  </div>
+  <script>
+    const LB_KEY = 'epm_load_balancing_v1';
+    async function loadLBRecords(){
+      return await FirestoreDB.loadRecords(LB_KEY);
+    }
+    function escapeHTML(str){
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    async function renderTable(){
+      const records = await loadLBRecords();
+      const container = document.getElementById('table-container');
+      const emptyEl = document.getElementById('empty');
+      if(!records || records.length === 0){
+        container.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      let html = '<table><thead><tr>';
+      html += '<th>Date</th>';
+      html += '<th>Branch</th>';
+      html += '<th>Panel</th>';
+      html += '<th>Phase A</th>';
+      html += '<th>Phase B</th>';
+      html += '<th>Phase C</th>';
+      html += '<th>Total Load</th>';
+      html += '<th>Remarks</th>';
+      html += '<th>Actions</th>';
+      html += '</tr></thead><tbody>';
+      records.forEach((rec,i)=>{
+        html += '<tr>';
+        html += `<td>${escapeHTML(rec.date||'')}</td>`;
+        html += `<td>${escapeHTML(rec.branch||'')}</td>`;
+        html += `<td>${escapeHTML(rec.panel||'')}</td>`;
+        html += `<td>${escapeHTML(rec.phaseA||'')}</td>`;
+        html += `<td>${escapeHTML(rec.phaseB||'')}</td>`;
+        html += `<td>${escapeHTML(rec.phaseC||'')}</td>`;
+        html += `<td>${escapeHTML(rec.totalLoad||'')}</td>`;
+        html += `<td>${escapeHTML(rec.remarks||'')}</td>`;
+        html += `<td><button onclick="viewRecord(${i})">View</button> <button onclick="printRecord(${i})">Print</button> <button onclick="deleteRecord(${i})" style="background:#e53e3e;color:#fff;">Delete</button></td>`;
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+    function viewRecord(idx){
+      loadLBRecords().then(records=>{
+        if(!records[idx]) return;
+        const rec = records[idx];
+        // --- Begin printable logic ported from form ---
+        function escapeHtml(s){ return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+        const circType = rec.circType || '';
+        // Table header logic
+        let lineLabels;
+        if(circType === 'three_delta'){
+          lineLabels = ['L1L2','L1L3','L2L3'];
+        } else if(circType === 'single_llc'){
+          lineLabels = ['L1L2','L2','L3','N'];
+        } else {
+          lineLabels = ['L1','L2','L3','N'];
+        }
+        // Prepare rows (rebuild from loads array)
+        const loadsArr = Array.isArray(rec.loads) ? rec.loads.slice().reverse() : [];
+        const maxRows = Math.max(24, loadsArr.length) + 1;
+        const rows = [];
+        for(let i=0;i<maxRows;i++){
+          const load = loadsArr[i];
+          const desc = load ? (load.name||load.description||'') : '';
+          let l1='', l2='', l3='', n='';
+          if(load){
+            const ph = String(load.phase||'').toUpperCase().replace(/\s+/g,'');
+            if(circType === 'three_delta'){
+              if(ph==='AB' || ph==='BA') l1 = Number(load.value).toFixed(2);
+              else if(ph==='CA' || ph==='AC') l2 = Number(load.value).toFixed(2);
+              else if(ph==='BC' || ph==='CB') l3 = Number(load.value).toFixed(2);
+            } else {
+              if(ph.indexOf('A')!==-1 || ph.indexOf('L1')!==-1) l1 = Number(load.value).toFixed(2);
+              if(ph.indexOf('B')!==-1 || ph.indexOf('L2')!==-1) l2 = Number(load.value).toFixed(2);
+              if(ph.indexOf('C')!==-1 || ph.indexOf('L3')!==-1 || ph.indexOf('3')!==-1) l3 = Number(load.value).toFixed(2);
+              if(ph.indexOf('N')!==-1) n = Number(load.value).toFixed(2);
+            }
+          }
+          const hasCurrent = !!(l1 || l2 || l3);
+          const vll = hasCurrent ? (rec.vll || '') : '';
+          const phv = hasCurrent ? (rec.vph || rec.vln || '') : '';
+          rows.push({description: desc, n: n, l1, l2, l3, v_l12: vll, v_l13: vll, v_l23: vll, ph_l1n: phv, ph_l2n: phv, ph_l3n: phv, remarks:''});
+        }
+        // Totals
+        let totL1=0, totL2=0, totL3=0; let totN=0;
+        rows.forEach(r=>{ totL1 += parseFloat(r.l1||0); totL2 += parseFloat(r.l2||0); totL3 += parseFloat(r.l3||0); totN += parseFloat(r.n||0) });
+        // Neutral current and remarks
+        let neutralCurrentDisplay = totN.toFixed(2);
+        let neutralCurrentMagnitude = totN;
+        let totalRowRemark = '';
+        if(circType === 'three_wye'){
+          const deg2rad = Math.PI / 180;
+          const L1_real = totL1 * Math.cos(0 * deg2rad);
+          const L1_imag = totL1 * Math.sin(0 * deg2rad);
+          const L2_real = totL2 * Math.cos(120 * deg2rad);
+          const L2_imag = totL2 * Math.sin(120 * deg2rad);
+          const L3_real = totL3 * Math.cos(-120 * deg2rad);
+          const L3_imag = totL3 * Math.sin(-120 * deg2rad);
+          const In_real = L1_real + L2_real + L3_real;
+          const In_imag = L1_imag + L2_imag + L3_imag;
+          const In_magnitude = Math.sqrt(In_real * In_real + In_imag * In_imag);
+          const In_angle = Math.atan2(In_imag, In_real) * (180 / Math.PI);
+          neutralCurrentDisplay = `${In_magnitude.toFixed(2)}∠${In_angle.toFixed(1)}°`;
+          neutralCurrentMagnitude = In_magnitude;
+          const avgPhaseCurrent = (totL1 + totL2 + totL3) / 3;
+          if(In_magnitude > avgPhaseCurrent){ totalRowRemark = 'Unbalanced Circuit'; } else { totalRowRemark = 'Balanced'; }
+        } else if(circType === 'three_delta'){
+          const avgLineCurrent = (totL1 + totL2 + totL3) / 3;
+          const threshold = avgLineCurrent * 0.20;
+          const deviationL1 = Math.abs(totL1 - avgLineCurrent);
+          const deviationL2 = Math.abs(totL2 - avgLineCurrent);
+          const deviationL3 = Math.abs(totL3 - avgLineCurrent);
+          if(deviationL1 > threshold || deviationL2 > threshold || deviationL3 > threshold){ totalRowRemark = 'Unbalanced'; } else { totalRowRemark = 'Balanced'; }
+        }
+        // --- End printable logic ported from form ---
+        let win = window.open('', '', 'width=1200,height=700');
+        win.document.write('<html><head><title>Load Balancing Record</title>');
+        win.document.write('<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px;}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px}th{background:#eee;text-align:center}td.center{text-align:center} .small{font-size:11px}</style>');
+        win.document.write('</head><body>');
+        win.document.write('<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><strong>'+escapeHtml(rec.company||'')+'</strong><br><span class="small">'+escapeHtml(rec.location||'')+'</span><br><span class="small"><strong>MAIN CIRCUIT DETAILS</strong></span><br><span class="small">Panel: '+escapeHtml(rec.panel||'')+'</span><br><span class="small">Branch: '+escapeHtml(rec.branch||'')+'</span><br><span class="small">MCB: '+escapeHtml(rec.mcb||'')+' A</span><br><span class="small">Main V: '+escapeHtml(rec.mainV||'')+' V</span><br><span class="small">Wires: '+escapeHtml(rec.wires||'')+'</span></div><div><strong>LOAD BALANCING</strong><br>Date: '+escapeHtml(rec.date||'')+'<br>Ref: '+escapeHtml(rec.refId||'')+'</div></div>');
+        // Table header
+        win.document.write('<table>');
+        win.document.write('<thead><tr>');
+        win.document.write('<th rowspan="2">DESCRIPTION</th>');
+        const lineCurrentColspan = (circType === 'three_delta') ? '3' : '4';
+        win.document.write(`<th colspan="${lineCurrentColspan}">LINE CURRENT (AMPS)</th>`);
+        win.document.write('<th colspan="3">LINE VOLTAGE (VOLTS)</th>');
+        win.document.write('<th colspan="3">PHASE VOLTAGE (VOLTS)</th>');
+        win.document.write('<th rowspan="2">REMARKS</th>');
+        win.document.write('</tr>');
+        win.document.write('<tr>');
+        if(circType === 'three_delta'){
+          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th>`);
+        } else {
+          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th><th>${lineLabels[3]}</th>`);
+        }
+        win.document.write('<th>V_L1L2</th><th>V_L1L3</th><th>V_L2L3</th>');
+        win.document.write('<th>L1-N</th><th>L2-N</th><th>L3-N</th>');
+        win.document.write('</tr>');
+        win.document.write('</thead>');
+        win.document.write('<tbody>');
+        // Table rows
+        rows.forEach((r, idx)=>{
+          const hasData = r.description || r.l1 || r.l2 || r.l3 || r.n || r.v_l12 || r.v_l13 || r.v_l23 || r.ph_l1n || r.ph_l2n || r.ph_l3n || r.remarks;
+          if(!hasData) return;
+          win.document.write('<tr>');
+          win.document.write(`<td>${escapeHtml(r.description)}</td>`);
+          win.document.write(`<td class="center">${r.l1||''}</td>`);
+          win.document.write(`<td class="center">${r.l2||''}</td>`);
+          win.document.write(`<td class="center">${r.l3||''}</td>`);
+          if(circType !== 'three_delta'){
+            win.document.write(`<td class="center">${r.n||''}</td>`);
+          }
+          if(circType === 'single_llc'){
+            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else {
+            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
+            win.document.write(`<td class="center">${r.v_l13||''}</td>`);
+            win.document.write(`<td class="center">${r.v_l23||''}</td>`);
+          }
+          if(circType === 'single_ln'){
+            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else if(circType === 'single_ll'){
+            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
+            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else if(circType === 'three_delta'){
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else {
+            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
+            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
+            win.document.write(`<td class="center">${r.ph_l3n||''}</td>`);
+          }
+          // Remarks
+          let rowRemark = r.remarks || '';
+          if(circType === 'three_wye' && r.description === 'Neutral Current' && r.n){
+            const measuredNeutral = parseFloat(r.n);
+            if(measuredNeutral > neutralCurrentMagnitude){ rowRemark = 'Suspected Harmonics'; }
+          }
+          win.document.write(`<td class="center">${rowRemark}</td>`);
+          win.document.write('</tr>');
+        });
+        // Totals row
+        win.document.write('<tr>');
+        win.document.write('<td style="text-align:right"><strong>Total</strong></td>');
+        win.document.write(`<td class="center"><strong>${totL1.toFixed(2)}</strong></td>`);
+        win.document.write(`<td class="center"><strong>${totL2.toFixed(2)}</strong></td>`);
+        win.document.write(`<td class="center"><strong>${totL3.toFixed(2)}</strong></td>`);
+        if(circType !== 'three_delta'){
+          win.document.write(`<td class="center"><strong>${neutralCurrentDisplay}</strong></td>`);
+        }
+        win.document.write('<td></td><td></td><td></td><td></td><td></td><td></td>');
+        win.document.write(`<td class="center"><strong>${totalRowRemark}</strong></td>`);
+        win.document.write('</tr>');
+        win.document.write('</tbody></table>');
+        win.document.write('<div style="margin-top:8px;font-size:12px">Generated by Load Balancer Tool</div>');
+        win.document.write('<div style="display:flex;justify-content:space-between;margin-top:24px;font-size:15px"><div><strong>Load Balancing Conducted by:</strong><br>'+escapeHtml(rec.conductedBy||'')+'</div><div><strong>Witnessed and Verified by:</strong><br>'+escapeHtml(rec.witnessBy||'')+'</div><div><strong>Date / Time:</strong><br>'+escapeHtml(rec.date||'')+', '+escapeHtml(rec.time||'')+'</div></div>');
+        win.document.write('</body></html>');
+        win.document.close();
+      });
+    }
+    function printRecord(idx){
+      loadLBRecords().then(records=>{
+        if(!records[idx]) return;
+        const rec = records[idx];
+        function escapeHtml(s){ return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+        const circType = rec.circType || '';
+        let lineLabels;
+        if(circType === 'three_delta'){
+          lineLabels = ['L1L2','L1L3','L2L3'];
+        } else if(circType === 'single_llc'){
+          lineLabels = ['L1L2','L2','L3','N'];
+        } else {
+          lineLabels = ['L1','L2','L3','N'];
+        }
+        const loadsArr = Array.isArray(rec.loads) ? rec.loads.slice().reverse() : [];
+        const maxRows = Math.max(24, loadsArr.length) + 1;
+        const rows = [];
+        for(let i=0;i<maxRows;i++){
+          const load = loadsArr[i];
+          const desc = load ? (load.name||load.description||'') : '';
+          let l1='', l2='', l3='', n='';
+          if(load){
+            const ph = String(load.phase||'').toUpperCase().replace(/\s+/g,'');
+            if(circType === 'three_delta'){
+              if(ph==='AB' || ph==='BA') l1 = Number(load.value).toFixed(2);
+              else if(ph==='CA' || ph==='AC') l2 = Number(load.value).toFixed(2);
+              else if(ph==='BC' || ph==='CB') l3 = Number(load.value).toFixed(2);
+            } else {
+              if(ph.indexOf('A')!==-1 || ph.indexOf('L1')!==-1) l1 = Number(load.value).toFixed(2);
+              if(ph.indexOf('B')!==-1 || ph.indexOf('L2')!==-1) l2 = Number(load.value).toFixed(2);
+              if(ph.indexOf('C')!==-1 || ph.indexOf('L3')!==-1 || ph.indexOf('3')!==-1) l3 = Number(load.value).toFixed(2);
+              if(ph.indexOf('N')!==-1) n = Number(load.value).toFixed(2);
+            }
+          }
+          const hasCurrent = !!(l1 || l2 || l3);
+          const vll = hasCurrent ? (rec.vll || '') : '';
+          const phv = hasCurrent ? (rec.vph || rec.vln || '') : '';
+          rows.push({description: desc, n: n, l1, l2, l3, v_l12: vll, v_l13: vll, v_l23: vll, ph_l1n: phv, ph_l2n: phv, ph_l3n: phv, remarks:''});
+        }
+        let totL1=0, totL2=0, totL3=0; let totN=0;
+        rows.forEach(r=>{ totL1 += parseFloat(r.l1||0); totL2 += parseFloat(r.l2||0); totL3 += parseFloat(r.l3||0); totN += parseFloat(r.n||0) });
+        let neutralCurrentDisplay = totN.toFixed(2);
+        let neutralCurrentMagnitude = totN;
+        let totalRowRemark = '';
+        if(circType === 'three_wye'){
+          const deg2rad = Math.PI / 180;
+          const L1_real = totL1 * Math.cos(0 * deg2rad);
+          const L1_imag = totL1 * Math.sin(0 * deg2rad);
+          const L2_real = totL2 * Math.cos(120 * deg2rad);
+          const L2_imag = totL2 * Math.sin(120 * deg2rad);
+          const L3_real = totL3 * Math.cos(-120 * deg2rad);
+          const L3_imag = totL3 * Math.sin(-120 * deg2rad);
+          const In_real = L1_real + L2_real + L3_real;
+          const In_imag = L1_imag + L2_imag + L3_imag;
+          const In_magnitude = Math.sqrt(In_real * In_real + In_imag * In_imag);
+          const In_angle = Math.atan2(In_imag, In_real) * (180 / Math.PI);
+          neutralCurrentDisplay = `${In_magnitude.toFixed(2)}∠${In_angle.toFixed(1)}°`;
+          neutralCurrentMagnitude = In_magnitude;
+          const avgPhaseCurrent = (totL1 + totL2 + totL3) / 3;
+          if(In_magnitude > avgPhaseCurrent){ totalRowRemark = 'Unbalanced Circuit'; } else { totalRowRemark = 'Balanced'; }
+        } else if(circType === 'three_delta'){
+          const avgLineCurrent = (totL1 + totL2 + totL3) / 3;
+          const threshold = avgLineCurrent * 0.20;
+          const deviationL1 = Math.abs(totL1 - avgLineCurrent);
+          const deviationL2 = Math.abs(totL2 - avgLineCurrent);
+          const deviationL3 = Math.abs(totL3 - avgLineCurrent);
+          if(deviationL1 > threshold || deviationL2 > threshold || deviationL3 > threshold){ totalRowRemark = 'Unbalanced'; } else { totalRowRemark = 'Balanced'; }
+        }
+        let win = window.open('', '', 'width=1200,height=700');
+        win.document.write('<html><head><title>Load Balancing Record</title>');
+        win.document.write('<style>@media print{@page{size:landscape;}} body{font-family:Arial,Helvetica,sans-serif;padding:12px;}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px}th{background:#eee;text-align:center}td.center{text-align:center} .small{font-size:11px}</style>');
+        win.document.write('</head><body>');
+        win.document.write('<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><strong>'+escapeHtml(rec.company||'')+'</strong><br><span class="small">'+escapeHtml(rec.location||'')+'</span><br><span class="small"><strong>MAIN CIRCUIT DETAILS</strong></span><br><span class="small">Panel: '+escapeHtml(rec.panel||'')+'</span><br><span class="small">Branch: '+escapeHtml(rec.branch||'')+'</span><br><span class="small">MCB: '+escapeHtml(rec.mcb||'')+' A</span><br><span class="small">Main V: '+escapeHtml(rec.mainV||'')+' V</span><br><span class="small">Wires: '+escapeHtml(rec.wires||'')+'</span></div><div><strong>LOAD BALANCING</strong><br>Date: '+escapeHtml(rec.date||'')+'<br>Ref: '+escapeHtml(rec.refId||'')+'</div></div>');
+        // Table header
+        win.document.write('<table>');
+        win.document.write('<thead><tr>');
+        win.document.write('<th rowspan="2">DESCRIPTION</th>');
+        const lineCurrentColspan = (circType === 'three_delta') ? '3' : '4';
+        win.document.write(`<th colspan="${lineCurrentColspan}">LINE CURRENT (AMPS)</th>`);
+        win.document.write('<th colspan="3">LINE VOLTAGE (VOLTS)</th>');
+        win.document.write('<th colspan="3">PHASE VOLTAGE (VOLTS)</th>');
+        win.document.write('<th rowspan="2">REMARKS</th>');
+        win.document.write('</tr>');
+        win.document.write('<tr>');
+        if(circType === 'three_delta'){
+          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th>`);
+        } else {
+          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th><th>${lineLabels[3]}</th>`);
+        }
+        win.document.write('<th>V_L1L2</th><th>V_L1L3</th><th>V_L2L3</th>');
+        win.document.write('<th>L1-N</th><th>L2-N</th><th>L3-N</th>');
+        win.document.write('</tr>');
+        win.document.write('</thead>');
+        win.document.write('<tbody>');
+        // Table rows
+        rows.forEach((r, idx)=>{
+          const hasData = r.description || r.l1 || r.l2 || r.l3 || r.n || r.v_l12 || r.v_l13 || r.v_l23 || r.ph_l1n || r.ph_l2n || r.ph_l3n || r.remarks;
+          if(!hasData) return;
+          win.document.write('<tr>');
+          win.document.write(`<td>${escapeHtml(r.description)}</td>`);
+          win.document.write(`<td class="center">${r.l1||''}</td>`);
+          win.document.write(`<td class="center">${r.l2||''}</td>`);
+          win.document.write(`<td class="center">${r.l3||''}</td>`);
+          if(circType !== 'three_delta'){
+            win.document.write(`<td class="center">${r.n||''}</td>`);
+          }
+          if(circType === 'single_llc'){
+            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else {
+            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
+            win.document.write(`<td class="center">${r.v_l13||''}</td>`);
+            win.document.write(`<td class="center">${r.v_l23||''}</td>`);
+          }
+          if(circType === 'single_ln'){
+            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else if(circType === 'single_ll'){
+            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
+            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else if(circType === 'three_delta'){
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+            win.document.write(`<td class="center"></td>`);
+          } else {
+            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
+            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
+            win.document.write(`<td class="center">${r.ph_l3n||''}</td>`);
+          }
+          // Remarks
+          let rowRemark = r.remarks || '';
+          if(circType === 'three_wye' && r.description === 'Neutral Current' && r.n){
+            const measuredNeutral = parseFloat(r.n);
+            if(measuredNeutral > neutralCurrentMagnitude){ rowRemark = 'Suspected Harmonics'; }
+          }
+          win.document.write(`<td class="center">${rowRemark}</td>`);
+          win.document.write('</tr>');
+        });
+        // Totals row
+        win.document.write('<tr>');
+        win.document.write('<td style="text-align:right"><strong>Total</strong></td>');
+        win.document.write(`<td class="center"><strong>${totL1.toFixed(2)}</strong></td>`);
+        win.document.write(`<td class="center"><strong>${totL2.toFixed(2)}</strong></td>`);
+        win.document.write(`<td class="center"><strong>${totL3.toFixed(2)}</strong></td>`);
+        if(circType !== 'three_delta'){
+          win.document.write(`<td class="center"><strong>${neutralCurrentDisplay}</strong></td>`);
+        }
+        win.document.write('<td></td><td></td><td></td><td></td><td></td><td></td>');
+        win.document.write(`<td class="center"><strong>${totalRowRemark}</strong></td>`);
+        win.document.write('</tr>');
+        win.document.write('</tbody></table>');
+        win.document.write('<div style="margin-top:8px;font-size:12px">Generated by Load Balancer Tool</div>');
+        win.document.write('<div style="display:flex;justify-content:space-between;margin-top:24px;font-size:15px"><div><strong>Load Balancing Conducted by:</strong><br>'+escapeHtml(rec.conductedBy||'')+'</div><div><strong>Witnessed and Verified by:</strong><br>'+escapeHtml(rec.witnessBy||'')+'</div><div><strong>Date / Time:</strong><br>'+escapeHtml(rec.date||'')+', '+escapeHtml(rec.time||'')+'</div></div>');
+        win.document.write('</body></html>');
+        win.document.close();
+      });
+    }
+    async function deleteRecord(idx){
+      if(!confirm('Are you sure you want to delete this record?')) return;
+      let records = await loadLBRecords();
+      if(idx < 0 || idx >= records.length) return;
+      records.splice(idx, 1);
+      await FirestoreDB.saveRecords(LB_KEY, records);
+      renderTable();
+    }
+    window.addEventListener('DOMContentLoaded',renderTable);
+  </script>
+</body>
+</html>
