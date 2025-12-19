@@ -70,6 +70,15 @@
 			return await FirestoreDB.loadRecords(KEY);
 		}
 
+		async function saveRecords(records) {
+			// Assuming FirestoreDB has a save method; fallback to localStorage if not
+			if (typeof FirestoreDB.saveRecords === 'function') {
+				await FirestoreDB.saveRecords(KEY, records);
+			} else {
+				localStorage.setItem(KEY, JSON.stringify(records));
+			}
+		}
+
 		async function renderTable(){
 			const records = await loadRecords();
 			const container = document.getElementById('table-container');
@@ -84,17 +93,8 @@
 			emptyEl.style.display = 'none';
 
 			let html = '<table><thead><tr>';
-			html += '<th>Date</th>';
-			html += '<th>Branch Code</th>';
-			html += '<th>Branch Name</th>';
-			html += '<th>Equipment</th>';
-			html += '<th>Location</th>';
-			html += '<th>Task</th>';
-			html += '<th>Status</th>';
-			html += '<th>Performed By</th>';
-			html += '<th>Verified By</th>';
-			html += '<th>Next Due</th>';
-			html += '<th>Notes</th>';
+			html += '<th>Date</th><th>Branch Code</th><th>Branch Name</th><th>Equipment</th><th>Location</th>';
+			html += '<th>Task</th><th>Status</th><th>Performed By</th><th>Verified By</th><th>Next Due</th><th>Notes</th>';
 			html += '</tr></thead><tbody>';
 
 			records.forEach(rec => {
@@ -174,73 +174,84 @@
 			window.print();
 		}
 
-		function openPreventiveMaintenanceRecord(){
-			// Force load and display all records from localStorage
-			renderTable();
-			
-			const records = loadRecords();
-			if(records.length > 0){
-				alert(`Loaded ${records.length} preventive maintenance record(s)`);
+		async function openPreventiveMaintenanceRecord(){
+			await renderTable();
+			const records = await loadRecords();
+			if (records.length > 0) {
+				alert(`Loaded ${records.length} preventive maintenance record(s).`);
 			} else {
-				alert('No records found in local storage. Please add records in the main app first.');
+				alert('No records found. Please add records in the main app first.');
 			}
 		}
 
 		function openBackupFile(){
 			const fileInput = document.getElementById('backup-file-input');
+			fileInput.value = ''; // Clear previous selection
 			fileInput.onchange = handleFileSelect;
 			fileInput.click();
 		}
 
-		function handleFileSelect(event){
+		async function handleFileSelect(event){
 			const file = event.target.files[0];
 			if(!file) return;
 
 			const reader = new FileReader();
 			const fileName = file.name.toLowerCase();
 
-			if(fileName.endsWith('.json')){
-				reader.onload = function(e){
-					try{
+			reader.onload = async function(e){
+				try {
+					let newRecords = [];
+
+					if(fileName.endsWith('.json')){
 						const data = JSON.parse(e.target.result);
 						if(Array.isArray(data)){
-							mergeAndPersist(data);
+							newRecords = data;
 						} else {
 							alert('Invalid JSON format. Expected an array of records.');
+							return;
 						}
-					}catch(err){
-						alert('Failed to parse JSON file: ' + err.message);
-					}
-				};
-				reader.readAsText(file);
-			} else if(fileName.endsWith('.csv')){
-				reader.onload = function(e){
-					try{
+					} else if(fileName.endsWith('.csv')){
 						const csv = e.target.result;
-						const records = parseCSV(csv);
-						if(records.length > 0){
-							mergeAndPersist(records);
-						} else {
+						newRecords = parseCSV(csv);
+						if(newRecords.length === 0){
 							alert('No records found in CSV file.');
+							return;
 						}
-					}catch(err){
-						alert('Failed to parse CSV file: ' + err.message);
+					} else {
+						alert('Please select a JSON or CSV file.');
+						return;
 					}
-				};
-				reader.readAsText(file);
-			} else {
-				alert('Please select a JSON or CSV file.');
-			}
 
-			// Reset input
-			event.target.value = '';
+					await mergeAndPersist(newRecords);
+				} catch(err){
+					alert('Error processing file: ' + err.message);
+				}
+			};
+
+			reader.readAsText(file);
 		}
 
 		function parseCSV(csv){
-			const lines = csv.split('\n').filter(line => line.trim());
-			if(lines.length < 2) return [];
+			const lines = csv.split(/\r\n|\n/).filter(line => line.trim() !== '');
+			if(lines.length < 1) return [];
 
-			const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+			// Normalize headers
+			const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+			const headerMap = {
+				'date': 'date',
+				'branch code': 'BranchCode',
+				'branch name': 'BranchName',
+				'equipment': 'equipment',
+				'location': 'location',
+				'task': 'task',
+				'status': 'status',
+				'performed by': 'performedBy',
+				'verified by': 'verifiedBy',
+				'next due': 'nextDue',
+				'notes': 'notes'
+			};
+
+			const headers = rawHeaders.map(h => h.toLowerCase());
 			const records = [];
 
 			for(let i = 1; i < lines.length; i++){
@@ -249,8 +260,9 @@
 
 				const record = {};
 				headers.forEach((header, idx) => {
-					if(idx < values.length){
-						record[header] = values[idx];
+					const key = headerMap[header];
+					if(key && idx < values.length){
+						record[key] = values[idx].trim();
 					}
 				});
 				records.push(record);
@@ -266,7 +278,7 @@
 
 			for(let i = 0; i < line.length; i++){
 				const char = line[i];
-				const nextChar = line[i + 1];
+				const nextChar = i + 1 < line.length ? line[i + 1] : null;
 
 				if(char === '"'){
 					if(inQuotes && nextChar === '"'){
@@ -276,40 +288,44 @@
 						inQuotes = !inQuotes;
 					}
 				} else if(char === ',' && !inQuotes){
-					result.push(current);
+					result.push(current.trim());
 					current = '';
 				} else {
 					current += char;
 				}
 			}
-			result.push(current);
+			result.push(current.trim());
 			return result;
 		}
 
-		function mergeAndPersist(newRecords){
+		async function mergeAndPersist(newRecords){
 			if(!Array.isArray(newRecords) || newRecords.length === 0){
-				alert('No valid records to merge');
+				alert('No valid records to import.');
 				return;
 			}
 
-			const existing = loadRecords();
+			const existing = await loadRecords();
 			const merged = [...existing];
 
+			let addedCount = 0;
 			newRecords.forEach(newRec => {
-				const isDup = existing.some(e => 
+				const isDup = existing.some(e =>
 					e.date === newRec.date &&
 					e.BranchCode === newRec.BranchCode &&
-					e.BranchName === newRec.BranchName &&
 					e.equipment === newRec.equipment &&
 					e.task === newRec.task &&
 					e.performedBy === newRec.performedBy
 				);
-				if(!isDup) merged.push(newRec);
+
+				if(!isDup){
+					merged.push(newRec);
+					addedCount++;
+				}
 			});
 
-			localStorage.setItem(KEY, JSON.stringify(merged));
-			alert(`Merged ${merged.length - existing.length} new record(s). Total: ${merged.length}`);
-			renderTable();
+			await saveRecords(merged);
+			alert(`Import complete! Added ${addedCount} new record(s). Total records: ${merged.length}`);
+			await renderTable();
 		}
 
 		// Initialize

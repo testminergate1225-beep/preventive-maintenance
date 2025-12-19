@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>Load Balancing - Printable Records</title>
+  <style>
+    body{font-family:Segoe UI,system-ui,-apple-system,'Helvetica Neue',Arial;margin:0;background:#f4f6f8;color:#111;padding:0}
+    .container{max-width:1100px;margin:30px auto;padding:18px}
+    h1{font-size:22px;margin-bottom:8px;color:#0b78d1}
+    .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    button{background:#0b78d1;color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s}
+    button:hover{opacity:0.9;transform:translateY(-1px)}
+    button.secondary{background:#e5e7eb;color:#111}
+    .card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:20px;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}
+    th{background:#f3f4f6;font-weight:600;position:sticky;top:0}
+    tr:hover{background:#f9fafb}
+    .empty{text-align:center;color:#6b7280;padding:40px;font-size:14px}
+    @media (max-width:768px){
+      .container{padding:8px}
+      h1{font-size:17px}
+      .toolbar{gap:6px}
+      button{padding:8px 12px;font-size:12px}
+      .card{padding:12px}
+      table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:11px}
+      th,td{padding:6px;white-space:nowrap}
+    }
+    @media print{.toolbar,button{display:none}}
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Load Balancing - Printable Records</h1>
+    <div class="toolbar">
+      <button onclick="window.location.href='load_balancing_form.html'">+ Add New Printable Form</button>
+      <button onclick="print()">Print List</button>
+      <button class="secondary" onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
+    <div class="card">
+      <div id="table-container"></div>
+      <div id="empty" class="empty" style="display:none">No printable records found. Add a new one from the form page.</div>
+    </div>
+  </div>
+  <script>
+    const LB_KEY = 'epm_load_balancing_v1';
+    async function loadLBRecords(){
+      return await FirestoreDB.loadRecords(LB_KEY);
+    }
+    function escapeHTML(str){
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    async function renderTable(){
+      const records = await loadLBRecords();
+      const container = document.getElementById('table-container');
+      const emptyEl = document.getElementById('empty');
+      if(!records || records.length === 0){
+        container.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      let html = '<table><thead><tr>';
+      html += '<th>Date</th>';
+      html += '<th>Branch</th>';
+      html += '<th>Panel</th>';
+      html += '<th>Phase A</th>';
+      html += '<th>Phase B</th>';
+      html += '<th>Phase C</th>';
+      html += '<th>Total Load</th>';
+      html += '<th>Remarks</th>';
+      html += '<th>Actions</th>';
+      html += '</tr></thead><tbody>';
+      records.forEach((rec,i)=>{
+        html += '<tr>';
+        html += `<td>${escapeHTML(rec.date||'')}</td>`;
+        html += `<td>${escapeHTML(rec.branch||'')}</td>`;
+        html += `<td>${escapeHTML(rec.panel||'')}</td>`;
+        html += `<td>${escapeHTML(rec.phaseA||'')}</td>`;
+        html += `<td>${escapeHTML(rec.phaseB||'')}</td>`;
+        html += `<td>${escapeHTML(rec.phaseC||'')}</td>`;
+        html += `<td>${escapeHTML(rec.totalLoad||'')}</td>`;
+        html += `<td>${escapeHTML(rec.remarks||'')}</td>`;
+        html += `<td><button onclick="printRecord(${i})">Print</button></td>`;
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+    function printRecord(idx){
+      loadLBRecords().then(records=>{
+        if(!records[idx]) return;
+        const rec = records[idx];
+        let win = window.open('', '', 'width=800,height=600');
+        win.document.write('<html><head><title>Printable Load Balancing Form</title>');
+        win.document.write('<style>body{font-family:Segoe UI,Arial,sans-serif;padding:30px;}h2{color:#0b78d1;}table{width:100%;border-collapse:collapse;}th,td{padding:10px;border:1px solid #ccc;}th{background:#f3f4f6;}</style>');
+        win.document.write('</head><body>');
+        win.document.write('<h2>Load Balancing Printable Form</h2>');
+        win.document.write('<table>');
+        win.document.write('<tr><th>Date</th><td>'+escapeHTML(rec.date||'')+'</td></tr>');
+        win.document.write('<tr><th>Branch</th><td>'+escapeHTML(rec.branch||'')+'</td></tr>');
+        win.document.write('<tr><th>Panel</th><td>'+escapeHTML(rec.panel||'')+'</td></tr>');
+        win.document.write('<tr><th>Phase A</th><td>'+escapeHTML(rec.phaseA||'')+'</td></tr>');
+        win.document.write('<tr><th>Phase B</th><td>'+escapeHTML(rec.phaseB||'')+'</td></tr>');
+        win.document.write('<tr><th>Phase C</th><td>'+escapeHTML(rec.phaseC||'')+'</td></tr>');
+        win.document.write('<tr><th>Total Load</th><td>'+escapeHTML(rec.totalLoad||'')+'</td></tr>');
+        win.document.write('<tr><th>Remarks</th><td>'+escapeHTML(rec.remarks||'')+'</td></tr>');
+        win.document.write('</table>');
+        win.document.write('</body></html>');
+        win.document.close();
+        win.print();
+      });
+    }
+    window.addEventListener('DOMContentLoaded',renderTable);
+  </script>
+</body>
+</html>
