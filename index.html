@@ -331,6 +331,10 @@
 		console.log('emptyEl:', emptyEl);
 		const viewToggleBtn = document.getElementById('view-toggle');
 
+		// Track if user is admin
+		let isAdminUser = false;
+		let currentEditingIndex = null;
+
 		// Initialize view mode
 		function initViewMode(){
 			const savedMode = localStorage.getItem(VIEW_MODE_KEY);
@@ -434,6 +438,37 @@
 		// Display welcome message after page load
 		setTimeout(displayWelcomeMessage, 1000);
 
+		// Check admin status
+		function checkAdminStatus() {
+			const firebaseUser = firebase.auth().currentUser;
+			
+			if (firebaseUser) {
+				console.log('Firebase user email:', firebaseUser.email);
+				
+				// Force refresh token to get latest claims
+				firebaseUser.getIdTokenResult(true).then(idTokenResult => {
+					console.log('Full token result:', idTokenResult);
+					console.log('Token claims:', idTokenResult.claims);
+					isAdminUser = idTokenResult.claims.admin === true;
+					console.log('Is admin:', isAdminUser);
+					console.log('Admin value type:', typeof idTokenResult.claims.admin);
+					
+					// Re-render to show/hide delete button
+					render();
+				}).catch(err => {
+					console.error('Error checking admin status:', err);
+					isAdminUser = false;
+					render();
+				});
+			} else {
+				console.log('Firebase user not ready, retrying...');
+				setTimeout(checkAdminStatus, 500);
+			}
+		}
+		
+		// Wait a bit longer for Firebase to initialize before checking admin status
+		setTimeout(checkAdminStatus, 2000);
+
 		function todayISO(){
 			const d = new Date();
 			return d.toISOString().slice(0,10);
@@ -488,7 +523,8 @@
 					<td>${escapeHTML(r.nextDue||'')}</td>
 					<td>${escapeHTML(r.notes||'')}</td>
 					<td class="actions">
-						<button data-idx="${idx}" class="small" onclick="deleteRecord(${idx})">Delete</button>
+						<button data-idx="${idx}" class="small" onclick="editRecord(${idx})" title="Edit this record">✏️ Edit</button>
+						${isAdminUser ? `<button data-idx="${idx}" class="small" onclick="deleteRecord(${idx})" title="Delete this record">Delete</button>` : ''}
 					</td>
 				`;
 				recordsBody.appendChild(tr);
@@ -524,8 +560,23 @@
 				nextDue: document.getElementById('nextDue').value || '',
 				notes: document.getElementById('notes').value.trim()
 			};
-			if(!rec.task){ alert('Please provide a task description.'); return; }		localStorage.removeItem(DISPLAY_CLEARED_KEY);			const records = await load();
-			records.unshift(rec);
+			if(!rec.task){ alert('Please provide a task description.'); return; }		
+			
+			localStorage.removeItem(DISPLAY_CLEARED_KEY);
+			const records = await load();
+			
+			// If editing, update the existing record
+			if(currentEditingIndex !== null) {
+				records[currentEditingIndex] = rec;
+				showToast('✓ Record updated successfully!', 2000, 'info');
+				currentEditingIndex = null;
+				document.getElementById('add-record').textContent = '➕ Add Record';
+			} else {
+				// Otherwise add new record
+				records.unshift(rec);
+				showToast('✓ Record added successfully!', 2000, 'info');
+			}
+			
 			await save(records);
 			await render();
 			form.reset();
@@ -538,6 +589,43 @@
 			if(!confirm('Delete this record?')) return;
 			records.splice(i,1);
 			await save(records); await render();
+		}
+
+		async function editRecord(i){
+			const records = await load();
+			if(i<0 || i>=records.length) return;
+			const rec = records[i];
+			
+			// Fill form with record data
+			document.getElementById('BranchCode').value = rec.BranchCode || '';
+			document.getElementById('BranchName').value = rec.BranchName || '';
+			document.getElementById('location').value = rec.location || '';
+			document.getElementById('equipment').value = rec.equipment || '';
+			document.getElementById('task').value = rec.task || '';
+			document.getElementById('status').value = rec.status || '';
+			document.getElementById('date').value = rec.date || '';
+			document.getElementById('performedBy').value = rec.performedBy || '';
+			document.getElementById('verifiedBy').value = rec.verifiedBy || '';
+			document.getElementById('nextDue').value = rec.nextDue || '';
+			document.getElementById('notes').value = rec.notes || '';
+			
+			// Set editing state
+			currentEditingIndex = i;
+			
+			// Change button text
+			const addBtn = document.getElementById('add-record');
+			const originalText = addBtn.textContent;
+			addBtn.textContent = '💾 Update Record';
+			
+			// Highlight record being edited
+			const allRows = document.querySelectorAll('#records-body tr');
+			allRows.forEach(row => row.style.backgroundColor = '');
+			if(allRows[i]) allRows[i].style.backgroundColor = '#fef3c7';
+			
+			// Scroll to form
+			document.getElementById('record-form-card').scrollIntoView({ behavior: 'smooth' });
+			
+			showToast('📝 Editing record - click Update Record to save', 3000, 'info');
 		}
 
 		async function exportCSV(){
@@ -696,7 +784,15 @@
 		});
 
 		document.getElementById('add-record').addEventListener('click', addRecordFromForm);
-		document.getElementById('reset-form').addEventListener('click', ()=>{ form.reset(); document.getElementById('date').value = todayISO(); });
+		document.getElementById('reset-form').addEventListener('click', ()=>{ 
+			form.reset(); 
+			document.getElementById('date').value = todayISO();
+			// Clear editing state
+			currentEditingIndex = null;
+			document.getElementById('add-record').textContent = '➕ Add Record';
+			// Remove highlight from records
+			document.querySelectorAll('#records-body tr').forEach(row => row.style.backgroundColor = '');
+		});
 		document.getElementById('export-csv').addEventListener('click', exportCSV);
 		document.getElementById('print').addEventListener('click', ()=>{ window.print(); });
 		document.getElementById('view-saved-records').addEventListener('click', ()=>{ window.open('pm_records.html', '_blank'); });
