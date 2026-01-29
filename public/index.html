@@ -122,7 +122,7 @@
 	</header>
 
 	<button id="view-toggle" title="Toggle between mobile and desktop view">📱 Mobile View</button>
-	<button id="header-toggle" title="Hide/Show header for full view">👁️ Hide Header</button>
+	<button id="header-toggle" title="Hide/Show header for full view"><img src="icon/open_eye.png" alt="toggle header" style="width:18px;height:18px;vertical-align:middle;margin-right:8px" /><span class="header-toggle-label">Hide Header</span></button>
 
 	<main class="container">
 		<div id="page-error" class="page-error" role="alert" aria-live="assertive"></div>
@@ -379,16 +379,28 @@
 			const isHidden = localStorage.getItem(HEADER_HIDDEN_KEY) === '1';
 			if(isHidden){
 				document.body.classList.add('header-hidden');
-				if(headerToggleBtn) headerToggleBtn.textContent = '👁️ Show Header';
+				// set button state
+				if(headerToggleBtn) updateHeaderToggleButton(true);
+			} else {
+				// ensure button reflects visible header
+				if(headerToggleBtn) updateHeaderToggleButton(false);
 			}
 		}
+
+
+	// Update header toggle button image and label
+	function updateHeaderToggleButton(isHidden){
+	    if(!headerToggleBtn) return;
+	    const img = headerToggleBtn.querySelector('img');
+	    const label = headerToggleBtn.querySelector('.header-toggle-label');
+	    if(img) img.src = isHidden ? 'icon/open_eye.png' : 'icon/close_eye.png';
+	    if(label) label.textContent = isHidden ? 'Show Header' : 'Hide Header';
+	}
 
 		function toggleHeader(){
 			const isHidden = document.body.classList.toggle('header-hidden');
 			localStorage.setItem(HEADER_HIDDEN_KEY, isHidden ? '1' : '0');
-			if(headerToggleBtn){
-				headerToggleBtn.textContent = isHidden ? '👁️ Show Header' : '👁️ Hide Header';
-			}
+			if(headerToggleBtn) updateHeaderToggleButton(isHidden);
 		}
 
 		if(headerToggleBtn){
