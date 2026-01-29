@@ -24,6 +24,8 @@
     .table-scroll{max-height:420px;overflow:auto;border:1px solid #000}
     .back-home-btn{position:fixed;top:20px;right:20px;z-index:1000;background:#0b78d1;color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;font-weight:600}
     .back-home-btn:hover{background:#0a6bbf;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+	.view-mtr-btn{position:fixed;top:60px;right:20px;z-index:1000;background:#28a745;color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;font-weight:600}
+	.view-mtr-btn:hover{background:#218838;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
 	@media (max-width:768px){
 		.page{margin:8px auto;padding:8px;font-size:12px}
 		h2{font-size:16px}
@@ -41,7 +43,7 @@
 		.sign-block{width:100%}
 		#circuitType{width:100%;font-size:11px}
 		.back-home-btn{top:10px;right:10px;padding:8px 12px;font-size:11px}
-	}    @media print{ .controls,.add-row-btn,.back-home-btn{display:none} }
+	}    @media print{ .controls,.add-row-btn,.back-home-btn,.view-mtr-btn{display:none} }
   </style>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -52,6 +54,7 @@
 </head>
 <body>
   <button class="back-home-btn" onclick="window.location.href='index.html'">← Back to Home Page</button>
+  <button class="view-mtr-btn" onclick="window.location.href='megger_test_viewer.html'">View MTR</button>
   <div class="page">
 				<h2>MEGGER TEST RESULT / INSULATION TEST</h2>
 				<div class="header-grid">
@@ -241,11 +244,42 @@
 	}
 
 	function saveTest(){
-		const rec = getFormData();
-		const arr = loadTests(); 
-		arr.push(rec); 
-		saveTests(arr); 
-		alert('Saved test.');
+			const rec = getFormData();
+			// Require a file name from user and save into viewer file list
+			let fileName = prompt('Enter file name to save this test (no extension):');
+			if(!fileName) { alert('Save cancelled - file name required.'); return; }
+			fileName = fileName.trim();
+			if(!fileName) { alert('Save cancelled - file name required.'); return; }
+
+			// Prepare file object for viewer
+			const fileObj = { name: fileName, data: rec, savedAt: new Date().toISOString() };
+
+			// Load existing viewer files (separate key)
+			const VIEW_KEY = 'megger_test_files_v1';
+			function loadViewerFiles(){ try{ const raw = localStorage.getItem(VIEW_KEY); return raw?JSON.parse(raw):[] }catch(e){return[]} }
+			function saveViewerFiles(a){ localStorage.setItem(VIEW_KEY, JSON.stringify(a)); }
+
+			const files = loadViewerFiles();
+			const editIdx = sessionStorage.getItem('megger_edit_idx');
+			if(editIdx !== null){
+				const idx = parseInt(editIdx,10);
+				if(!isNaN(idx) && idx>=0 && idx<files.length){
+					// overwrite existing file - preserve name if user left it blank
+					files[idx] = fileObj;
+					saveViewerFiles(files);
+					sessionStorage.removeItem('megger_edit_idx');
+					alert('Saved test (edited).');
+					return;
+				}
+			}
+
+			// If same name exists, append timestamp to avoid silent overwrite
+			if(files.some(f=>f.name === fileObj.name)){
+				fileObj.name = `${fileObj.name}_${(new Date()).toISOString().replace(/[:.]/g,'')}`;
+			}
+			files.push(fileObj);
+			saveViewerFiles(files);
+			alert('Saved test.');
 	}
 
 	function buildCSV(records){
@@ -270,13 +304,69 @@
 				const html = `<!doctype html><html><head><meta charset="utf-8"><title>Megger Test Print</title><style>body{font-family:Arial;padding:10px}.report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}.reference-no{text-align:right;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:6px;text-align:left}th{background:#f4f4f4}</style></head><body>`+
 					`<div class="report-header"><div><h3 style="margin:0">Megger Test Report</h3><div><strong>Company:</strong> ${esc(r.company)} &nbsp;&nbsp; <strong>Location:</strong> ${esc(r.location)}</div><div><strong>Date:</strong> ${esc(r.date)} &nbsp;&nbsp; <strong>Voltage:</strong> ${esc(r.testVoltage)}</div></div><div class="reference-no">${r.referenceNo ? 'REF NO: ' + esc(r.referenceNo) : ''}</div></div>`+
 					`<table><thead><tr><th>PANEL</th><th>BRANCH CKT #</th><th>L1-L2</th><th>L1-L3</th><th>L2-L3</th><th>L1-N</th><th>L2-N</th><th>L3-N</th><th>L1-G</th><th>L2-G</th><th>L3-G</th><th>N-G</th><th>WIRE</th><th>REMARKS</th></tr></thead><tbody>${rowsHtml}</tbody></table>`+
-				`<div style="margin-top:20px"><strong>Conducted By:</strong> ${esc(r.conductedBy)} &nbsp;&nbsp; <strong>Witnessed By:</strong> ${esc(r.witnessedBy)} &nbsp;&nbsp; <strong>Verified By:</strong> ${esc(r.verifiedBy)}</div><scr`+`ipt>window.print()</scr`+`ipt></body></html>`;
+								`<div style="margin-top:24px;display:flex;gap:18px;justify-content:space-between">`+
+									`<div style="flex:1;text-align:center;">
+										 <div style="border-bottom:1px solid #000;height:28px;margin-bottom:8px"></div>
+										 <div style="font-weight:700">${esc(r.conductedBy) || '&nbsp;'}</div>
+										 <div style="font-size:12px;color:#444">Conducted By</div>
+										 <div style="font-size:12px;color:#444;margin-top:6px">Date: ${esc(r.date)||''}</div>
+									 </div>`+
+									`<div style="flex:1;text-align:center;">
+										 <div style="border-bottom:1px solid #000;height:28px;margin-bottom:8px"></div>
+										 <div style="font-weight:700">${esc(r.witnessedBy) || '&nbsp;'}</div>
+										 <div style="font-size:12px;color:#444">Witnessed By</div>
+										 <div style="font-size:12px;color:#444;margin-top:6px">Date: ${esc(r.date)||''}</div>
+									 </div>`+
+									`<div style="flex:1;text-align:center;">
+										 <div style="border-bottom:1px solid #000;height:28px;margin-bottom:8px"></div>
+										 <div style="font-weight:700">${esc(r.verifiedBy) || '&nbsp;'}</div>
+										 <div style="font-size:12px;color:#444">Verified By</div>
+										 <div style="font-size:12px;color:#444;margin-top:6px">Date: ${esc(r.date)||''}</div>
+									 </div>`+
+								`</div><scr`+`ipt>window.print()</scr`+`ipt></body></html>`;
 		return html;
 	}
 
 	// Initialize on page load
 	document.addEventListener('DOMContentLoaded', function(){
 		const panelBody = document.getElementById('panelBody');
+
+		function populateFormFromRecord(r){
+			if(!r) return;
+			// basic fields
+			document.getElementById('company').value = r.company || '';
+			document.getElementById('location').value = r.location || '';
+			document.getElementById('subject').value = r.subject || '';
+			document.getElementById('testDate').value = r.date || new Date().toISOString().slice(0,10);
+			document.getElementById('testTime').value = r.time || '';
+			document.getElementById('testVoltage').value = r.testVoltage || '';
+			document.getElementById('referenceNo').value = r.referenceNo || generateReferenceNumber();
+			document.getElementById('circuitType').value = r.circuitType || '3phase-wye';
+			document.getElementById('conductedBy').value = r.conductedBy || '';
+			document.getElementById('witnessedBy').value = r.witnessedBy || '';
+			document.getElementById('verifiedBy').value = r.verifiedBy || '';
+			// rows
+			panelBody.innerHTML = '';
+			(r.rows||[]).forEach(row=>{
+				const tr = makeRow();
+				panelBody.appendChild(tr);
+				tr.querySelector('.panel-name').value = row.panel || '';
+				tr.querySelector('.branch-ckt').value = row.branch || '';
+				tr.querySelector('.l1l2').value = row['L1-L2'] || '';
+				tr.querySelector('.l1l3').value = row['L1-L3'] || '';
+				tr.querySelector('.l2l3').value = row['L2-L3'] || '';
+				tr.querySelector('.l1n').value = row['L1-N'] || '';
+				tr.querySelector('.l2n').value = row['L2-N'] || '';
+				tr.querySelector('.l3n').value = row['L3-N'] || '';
+				tr.querySelector('.l1g').value = row['L1-G'] || '';
+				tr.querySelector('.l2g').value = row['L2-G'] || '';
+				tr.querySelector('.l3g').value = row['L3-G'] || '';
+				tr.querySelector('.ng').value = row['N-G'] || '';
+				tr.querySelector('.wire').value = row.wire || '';
+				tr.querySelector('.remarks').value = row.remarks || '';
+			});
+			applyCircuitTypeRules();
+		}
 		
 		function addRow(){ 
 			panelBody.appendChild(makeRow()); 
@@ -287,12 +377,32 @@
 			if(panelBody.lastElementChild) panelBody.removeChild(panelBody.lastElementChild); 
 		}
 		
-		// Set initial reference number
-		document.getElementById('referenceNo').value = generateReferenceNumber();
-		
-		// Set today's date
-		const today = new Date().toISOString().slice(0,10);
-		document.getElementById('testDate').value = today;
+		// Check if editing an existing file (from viewer)
+		const editIdx = sessionStorage.getItem('megger_edit_idx');
+		if(editIdx !== null){
+			try{
+				const VIEW_KEY = 'megger_test_files_v1';
+				const raw = localStorage.getItem(VIEW_KEY);
+				if(raw){
+					const arr = JSON.parse(raw);
+					const idx = parseInt(editIdx,10);
+					if(!isNaN(idx) && arr[idx]){
+						populateFormFromRecord(arr[idx].data);
+						// keep editIdx until save overwrites and clears it
+					}
+				}
+			}catch(e){console.error('Failed to load edit file',e)}
+		} else {
+			// Set initial reference number
+			document.getElementById('referenceNo').value = generateReferenceNumber();
+			// Set today's date
+			const today = new Date().toISOString().slice(0,10);
+			document.getElementById('testDate').value = today;
+			// Initialize with 12 empty rows
+			for(let i=0;i<12;i++) addRow();
+			// Apply initial circuit type rules
+			applyCircuitTypeRules();
+		}
 		
 		// Add event listeners
 		document.getElementById('add-row').addEventListener('click', ()=> addRow());
@@ -322,11 +432,7 @@
 			setTimeout(()=> URL.revokeObjectURL(url), 2000);
 		});
 		
-		// Initialize with 12 empty rows
-		for(let i=0;i<12;i++) addRow();
-		
-		// Apply initial circuit type rules
-		applyCircuitTypeRules();
+
 	});
 	</script>
 </body>
