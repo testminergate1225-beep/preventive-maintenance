@@ -62,13 +62,13 @@
       <form id="login-form">
         <div class="form-group">
           <label for="login-email">Email Address</label>
-          <input id="login-email" type="email" placeholder="your.email@example.com" required autocomplete="email" />
+          <input id="login-email" type="email" placeholder="Enter your Email Address" required autocomplete="email" />
         </div>
         <div class="form-group">
           <label for="login-password">Password</label>
           <div class="password-toggle">
-            <input id="login-password" type="password" placeholder="Enter your password" required autocomplete="current-password" />
-            <button type="button" class="toggle-btn" onclick="togglePassword('login-password')">👁️</button>
+            <input id="login-password" type="password" placeholder="Enter your Password" required autocomplete="current-password" />
+            <button type="button" class="toggle-btn" onclick="togglePassword('login-password', this)"><img src="icon/open_eye.png" alt="show password" style="width:18px;height:18px;vertical-align:middle"/></button>
           </div>
         </div>
         <div class="forgot-password">
@@ -85,26 +85,37 @@
       <form id="signup-form" style="display:none">
         <div class="form-group">
           <label for="signup-name">Full Name</label>
-          <input id="signup-name" type="text" placeholder="Enter your name" required autocomplete="name" />
+          <input id="signup-name" type="text" placeholder="Enter your Full Name" required autocomplete="name" />
         </div>
         <div class="form-group">
           <label for="signup-email">Email Address</label>
-          <input id="signup-email" type="email" placeholder="your.email@example.com" required autocomplete="email" />
+          <input id="signup-email" type="email" placeholder="Enter a Valid Email Address" required autocomplete="email" />
         </div>
         <div class="form-group">
           <label for="signup-password">Password</label>
           <div class="password-toggle">
             <input id="signup-password" type="password" placeholder="At least 6 characters" required autocomplete="new-password" minlength="6" />
-            <button type="button" class="toggle-btn" onclick="togglePassword('signup-password')">👁️</button>
+            <button type="button" class="toggle-btn" onclick="togglePassword('signup-password', this)"><img src="icon/open_eye.png" alt="show password" style="width:18px;height:18px;vertical-align:middle"/></button>
           </div>
         </div>
         <div class="form-group">
           <label for="signup-password-confirm">Confirm Password</label>
           <div class="password-toggle">
             <input id="signup-password-confirm" type="password" placeholder="Re-enter password" required autocomplete="new-password" minlength="6" />
-            <button type="button" class="toggle-btn" onclick="togglePassword('signup-password-confirm')">👁️</button>
+            <button type="button" class="toggle-btn" onclick="togglePassword('signup-password-confirm', this)"><img src="icon/open_eye.png" alt="show password" style="width:18px;height:18px;vertical-align:middle"/></button>
           </div>
         </div>
+          <div class="form-group">
+            <label for="verifier-email">Existing Account Email (to verify)</label>
+            <input id="verifier-email" type="email" placeholder="Enter verifier's email address" required autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="verifier-password">Existing Account Password</label>
+            <div class="password-toggle">
+              <input id="verifier-password" type="password" placeholder="Verifier password" required autocomplete="current-password" />
+              <button type="button" class="toggle-btn" onclick="togglePassword('verifier-password', this)"><img src="icon/open_eye.png" alt="show password" style="width:18px;height:18px;vertical-align:middle"/></button>
+            </div>
+          </div>
         <button id="signup-btn" type="submit" class="btn-primary">Create Account</button>
       </form>
 
@@ -116,7 +127,7 @@
       <form id="reset-form" style="display:none">
         <div class="form-group">
           <label for="reset-email">Email Address</label>
-          <input id="reset-email" type="email" placeholder="your.email@example.com" required autocomplete="email" />
+          <input id="reset-email" type="email" placeholder="Enter your Existing Email Address" required autocomplete="email" />
         </div>
         <button id="reset-btn" type="submit" class="btn-primary">Send Reset Link</button>
       </form>
@@ -129,6 +140,8 @@
 
   <script>
     let auth = null;
+    // When verifying existing credentials during signup we temporarily suppress the global auth-state redirect.
+    window.suppressAuthRedirect = false;
 
     // Initialize Firebase Auth
     async function initAuth() {
@@ -139,10 +152,10 @@
         }
         
         auth = firebase.auth();
-        
-        // Check if user is already logged in
+
+        // Check if user is already logged in. Respect `window.suppressAuthRedirect` when set.
         auth.onAuthStateChanged(user => {
-          if (user) {
+          if (user && !window.suppressAuthRedirect) {
             // User is signed in, redirect to main app
             window.location.href = 'index.html';
           }
@@ -205,6 +218,32 @@
         showError('Password must be at least 6 characters.');
         return;
       }
+
+      // Require an existing account's credentials to authorize this signup
+      const verifierEmail = document.getElementById('verifier-email').value.trim();
+      const verifierPassword = document.getElementById('verifier-password').value;
+      if (!verifierEmail || !verifierPassword) {
+        showError('Please provide existing account credentials to authorize signup.');
+        return;
+      }
+
+      try {
+        // Suppress the global auth-state redirect while we verify credentials
+        window.suppressAuthRedirect = true;
+        // Attempt to sign in using the verifier credentials
+        await auth.signInWithEmailAndPassword(verifierEmail, verifierPassword);
+        // If successful, currentUser is now the verifier; proceed to create the new account
+      } catch (err) {
+        console.error('Verifier sign-in failed:', err);
+        let msg = 'Verifier credentials invalid.';
+        if (err.code === 'auth/user-not-found') msg = 'Verifier account not found.';
+        if (err.code === 'auth/wrong-password') msg = 'Incorrect verifier password.';
+        if (err.code === 'auth/user-disabled') msg = 'Verifier account is disabled.';
+        showError(msg);
+        // restore redirect behavior
+        window.suppressAuthRedirect = false;
+        return;
+      }
       
       btn.disabled = true;
       btn.textContent = 'Creating account...';
@@ -216,6 +255,8 @@
         await userCredential.user.updateProfile({ displayName: name });
         
         showSuccess('Account created successfully! Redirecting...');
+        // restore redirect behavior then navigate
+        window.suppressAuthRedirect = false;
         setTimeout(() => window.location.href = 'index.html', 1500);
       } catch (error) {
         console.error('Signup error:', error);
@@ -226,8 +267,12 @@
         showError(message);
         btn.disabled = false;
         btn.textContent = 'Create Account';
+        // keep suppressAuthRedirect false to allow normal redirects for signed-in verifier
+        window.suppressAuthRedirect = false;
       }
     });
+
+    
 
     // Reset Password
     document.getElementById('reset-form').addEventListener('submit', async (e) => {
@@ -286,9 +331,30 @@
       hideMessages();
     }
 
-    function togglePassword(fieldId) {
+    function togglePassword(fieldId, btn) {
       const field = document.getElementById(fieldId);
-      field.type = field.type === 'password' ? 'text' : 'password';
+      if (!field) return;
+      const isPassword = field.type === 'password';
+      field.type = isPassword ? 'text' : 'password';
+
+      // Update icon if provided
+      try {
+        let img = null;
+        if (btn && btn.querySelector) img = btn.querySelector('img');
+        if (!img) {
+          // fallback: find nearest .password-toggle button that targets this field
+          const buttons = document.querySelectorAll('.password-toggle .toggle-btn');
+          buttons.forEach(b => {
+            if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(fieldId)) img = b.querySelector('img');
+          });
+        }
+        if (img) {
+          img.src = isPassword ? 'icon/close_eye.png' : 'icon/open_eye.png';
+          img.alt = isPassword ? 'hide password' : 'show password';
+        }
+      } catch (e) {
+        // non-fatal
+      }
     }
 
     function showError(message) {
@@ -317,3 +383,4 @@
   </script>
 </body>
 </html>
+
