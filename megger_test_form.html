@@ -130,7 +130,7 @@
                     <div class="sign-block">
 						<div>VERIFIED BY:</div>
 						<div style="height:48px"></div>
-						<div><input id="verifiedBy" type="text" placeholder="Engineer/Mall Engineering" /></div>
+						<div><input id="verifiedBy" type="text" placeholder="Electrical Engineer" /></div>
 					</div>
 				</div>
 			</div>
@@ -257,7 +257,14 @@
 			// Load existing viewer files (separate key)
 			const VIEW_KEY = 'megger_test_files_v1';
 			function loadViewerFiles(){ try{ const raw = localStorage.getItem(VIEW_KEY); return raw?JSON.parse(raw):[] }catch(e){return[]} }
-			function saveViewerFiles(a){ localStorage.setItem(VIEW_KEY, JSON.stringify(a)); }
+			async function saveViewerFiles(a){ 
+				localStorage.setItem(VIEW_KEY, JSON.stringify(a));
+				// Also sync to Firebase
+				if(typeof FirestoreDB !== 'undefined' && FirestoreDB.saveRecords){
+					try{ await FirestoreDB.saveRecords('megger_test_files_v1', a); }
+					catch(e){ console.error('Firebase sync failed:', e); }
+				}
+			}
 
 			const files = loadViewerFiles();
 			const editIdx = sessionStorage.getItem('megger_edit_idx');
@@ -266,7 +273,7 @@
 				if(!isNaN(idx) && idx>=0 && idx<files.length){
 					// overwrite existing file - preserve name if user left it blank
 					files[idx] = fileObj;
-					saveViewerFiles(files);
+					(async ()=>{ await saveViewerFiles(files); })();
 					sessionStorage.removeItem('megger_edit_idx');
 					alert('Saved test (edited).');
 					return;
@@ -278,7 +285,7 @@
 				fileObj.name = `${fileObj.name}_${(new Date()).toISOString().replace(/[:.]/g,'')}`;
 			}
 			files.push(fileObj);
-			saveViewerFiles(files);
+			(async ()=>{ await saveViewerFiles(files); })();
 			alert('Saved test.');
 	}
 
