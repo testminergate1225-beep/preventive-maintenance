@@ -50,6 +50,19 @@
     function saveFileList(arr) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
     }
+    async function loadFromFirebase() {
+      // Load from Firebase Realtime Database if available
+      if(typeof FirestoreDB !== 'undefined' && FirestoreDB.loadRecords){
+        try {
+          const fbFiles = await FirestoreDB.loadRecords(STORAGE_KEY);
+          if(fbFiles && Array.isArray(fbFiles) && fbFiles.length > 0){
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fbFiles));
+            return fbFiles;
+          }
+        } catch(e) { console.error('Firebase load failed:', e); }
+      }
+      return loadFileList();
+    }
     function renderFileList() {
       const files = loadFileList();
       const listDiv = document.getElementById('file-list');
@@ -70,6 +83,10 @@
       });
       html += '</tbody></table>';
       listDiv.innerHTML = html;
+    }
+    async function renderFileListAsync() {
+      const files = await loadFromFirebase();
+      renderFileList();
     }
     function escapeHTML(s) {
       return String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -127,8 +144,9 @@
         `</div><scr`+`ipt>window.print()</scr`+`ipt></body></html>`;
       return html;
     }
-    document.addEventListener('DOMContentLoaded', renderFileList);
+    document.addEventListener('DOMContentLoaded', async function(){
+      await renderFileListAsync();
+    });
   </script>
 </body>
 </html>
-
