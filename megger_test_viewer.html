@@ -38,6 +38,7 @@
   </div>
   <script>
     const STORAGE_KEY = 'megger_test_files_v1';
+    let isAdminUser = false;
     // Each file: {name, data, savedAt}
     function loadFileList() {
       try {
@@ -49,6 +50,20 @@
     }
     function saveFileList(arr) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    }
+    async function checkAdminRole() {
+      try {
+        if (typeof firebase === 'undefined' || !firebase.auth) return false;
+        const user = firebase.auth().currentUser;
+        if (!user) return false;
+        const token = await user.getIdTokenResult();
+        isAdminUser = token.claims.admin === true;
+        console.log('Admin status:', isAdminUser);
+        return isAdminUser;
+      } catch(e) {
+        console.error('Admin check failed:', e);
+        return false;
+      }
     }
     async function loadFromFirebase() {
       // Load from Firebase Realtime Database if available
@@ -75,10 +90,14 @@
       emptyDiv.style.display = 'none';
       let html = '<table><thead><tr><th>File Name</th><th>Date Saved</th><th>Actions</th></tr></thead><tbody>';
       files.forEach((f, idx) => {
-        html += `<tr><td>${escapeHTML(f.name)}</td><td>${f.savedAt ? new Date(f.savedAt).toLocaleString() : ''}</td><td>` +
-          `<button class='btn secondary' onclick='viewFile(${idx})'>View</button> ` +
+        let actionButtons = `<button class='btn secondary' onclick='viewFile(${idx})'>View</button> ` +
           `<button class='btn secondary' onclick='printFile(${idx})'>Print</button> ` +
-          `<button class='btn' onclick='editFile(${idx})'>Edit</button>` +
+          `<button class='btn' onclick='editFile(${idx})'>Edit</button>`;
+        if (isAdminUser) {
+          actionButtons += ` <button class='btn' style='background:#d9534f' onclick='deleteFile(${idx})'>Delete</button>`;
+        }
+        html += `<tr><td>${escapeHTML(f.name)}</td><td>${f.savedAt ? new Date(f.savedAt).toLocaleString() : ''}</td><td>` +
+          actionButtons +
           `</td></tr>`;
       });
       html += '</tbody></table>';
@@ -113,6 +132,30 @@
       sessionStorage.setItem('megger_edit_idx', idx);
       window.location.href = 'megger_test_form.html';
     }
+    async function deleteFile(idx) {
+      if (!isAdminUser) {
+        alert('Only Admin users can delete files.');
+        return;
+      }
+      const files = loadFileList();
+      if (idx < 0 || idx >= files.length) {
+        alert('File not found.');
+        return;
+      }
+      const fileName = files[idx].name;
+      if (!confirm(`Delete file "${fileName}"? This action cannot be undone.`)) {
+        return;
+      }
+      files.splice(idx, 1);
+      saveFileList(files);
+      // Also sync to Firebase
+      if(typeof FirestoreDB !== 'undefined' && FirestoreDB.saveRecords){
+        try { await FirestoreDB.saveRecords(STORAGE_KEY, files); }
+        catch(e){ console.error('Firebase delete sync failed:', e); }
+      }
+      alert('File deleted.');
+      renderFileList();
+    }
     function renderPrintable(r){
       function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
       let rowsHtml = '';
@@ -145,6 +188,7 @@
       return html;
     }
     document.addEventListener('DOMContentLoaded', async function(){
+      await checkAdminRole();
       await renderFileListAsync();
     });
   </script>
