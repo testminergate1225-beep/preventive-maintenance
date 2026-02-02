@@ -58,7 +58,7 @@
 
 		<div class="filter-section" style="background: #f0f4f8; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
 			<label style="font-weight: 500; color: #333;">Filter by Month/Year:</label>
-			<select id="month-filter" onchange="renderTable()" style="padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 150px;">
+			<select id="month-filter" onchange="filterChange()" style="padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 150px;">
 				<option value="">-- All Months --</option>
 			</select>
 			<button onclick="resetFilters()" style="padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer;">Reset Filters</button>
@@ -109,28 +109,36 @@
 
 		// Populate month/year filter dropdown
 		async function populateFilterOptions() {
-			const records = await loadRecords();
-			const monthYears = new Set();
+			try {
+				const records = await loadRecords();
+				console.log('Populating filter with records:', records.length);
+				const monthYears = new Set();
 
-			records.forEach(rec => {
-				const my = getMonthYear(rec.date);
-				if (my) monthYears.add(my);
-			});
+				records.forEach(rec => {
+					const my = getMonthYear(rec.date);
+					console.log('Record date:', rec.date, 'Month-Year:', my);
+					if (my) monthYears.add(my);
+				});
 
-			const sorted = Array.from(monthYears).sort().reverse(); // Newest first
-			const select = document.getElementById('month-filter');
-			const currentValue = select.value;
+				const sorted = Array.from(monthYears).sort().reverse(); // Newest first
+				console.log('Sorted months:', sorted);
+				const select = document.getElementById('month-filter');
+				const currentValue = select.value;
 
-			// Clear and repopulate (keep "All Months" option)
-			select.innerHTML = '<option value="">-- All Months --</option>';
-			sorted.forEach(my => {
-				const option = document.createElement('option');
-				option.value = my;
-				option.textContent = formatMonthYear(my);
-				select.appendChild(option);
-			});
+				// Clear and repopulate (keep "All Months" option)
+				select.innerHTML = '<option value="">-- All Months --</option>';
+				sorted.forEach(my => {
+					const option = document.createElement('option');
+					option.value = my;
+					option.textContent = formatMonthYear(my);
+					console.log('Adding option:', my, '->', formatMonthYear(my));
+					select.appendChild(option);
+				});
 
-			select.value = currentValue; // Restore selection if it still exists
+				select.value = currentValue; // Restore selection if it still exists
+			} catch(e) {
+				console.error('Error populating filter:', e);
+			}
 		}
 
 		async function renderTable(){
@@ -160,7 +168,7 @@
 				? `Showing ${filteredRecords.length} record(s) for ${formatMonthYear(selectedMonth)}` 
 				: `Showing ${filteredRecords.length} total record(s)`;
 
-			// Sort records by date descending, then group by month
+			// Sort records by date descending
 			filteredRecords.sort((a, b) => {
 				const dateA = new Date(a.date || '1900-01-01');
 				const dateB = new Date(b.date || '1900-01-01');
@@ -210,6 +218,10 @@
 
 		function resetFilters() {
 			document.getElementById('month-filter').value = '';
+			renderTable();
+		}
+
+		function filterChange() {
 			renderTable();
 		}
 
@@ -426,10 +438,18 @@
 
 		// Initialize
 		async function init() {
+			console.log('Initializing pm_records...');
 			await populateFilterOptions();
 			await renderTable();
+			console.log('Initialization complete');
 		}
-		init();
+
+		// Wait for DOM to be ready
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', init);
+		} else {
+			init();
+		}
 	</script>
 </body>
 </html>
