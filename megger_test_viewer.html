@@ -53,13 +53,30 @@
     }
     async function checkAdminRole() {
       try {
-        if (typeof firebase === 'undefined' || !firebase.auth) return false;
-        const user = firebase.auth().currentUser;
-        if (!user) return false;
-        const token = await user.getIdTokenResult();
-        isAdminUser = token.claims.admin === true;
-        console.log('Admin status:', isAdminUser);
-        return isAdminUser;
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+          console.warn('Firebase not initialized yet');
+          return false;
+        }
+        // Wait for auth state to settle - user should be set by now
+        return new Promise((resolve) => {
+          const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+            unsubscribe();
+            if (!user) {
+              console.warn('No user authenticated');
+              resolve(false);
+              return;
+            }
+            try {
+              const token = await user.getIdTokenResult(true); // Force refresh
+              isAdminUser = token.claims.admin === true;
+              console.log('Admin status:', isAdminUser, 'User:', user.email, 'Claims:', token.claims);
+              resolve(isAdminUser);
+            } catch(e) {
+              console.error('Token fetch failed:', e);
+              resolve(false);
+            }
+          });
+        });
       } catch(e) {
         console.error('Admin check failed:', e);
         return false;
@@ -188,7 +205,9 @@
       return html;
     }
     document.addEventListener('DOMContentLoaded', async function(){
-      await checkAdminRole();
+      // Check admin role (waits for auth state to settle)
+      const adminOk = await checkAdminRole();
+      console.log('Admin check completed:', adminOk);
       await renderFileListAsync();
     });
   </script>
