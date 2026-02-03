@@ -7,6 +7,13 @@ yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
 
+# for privacy protection
+serviceAccountKEY.json
+set-admnin.js
+set-user-role.js
+user-role-management.js
+run_server.js
+
 # Firebase cache
 .firebase/
 
