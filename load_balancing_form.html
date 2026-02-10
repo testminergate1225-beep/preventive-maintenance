@@ -55,6 +55,7 @@
 		div[style*="width:"]{width:100%!important}
 		.small{width:100%!important}
 	}  </style>
+  <link rel="stylesheet" href="hangar-theme.css">
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -976,5 +977,7 @@
     // compute summary periodically when storage or other pages change
     window.addEventListener('storage', ()=>{ loads = loadFromStorage(); renderLoads(); computeSummary(); });
   </script>
+  <script src="hangar-theme.js"></script>
+<script src="theme-loader.js"></script>
 </body>
 </html>
