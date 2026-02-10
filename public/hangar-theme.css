@@ -1,0 +1,917 @@
+/* ============================================================
+   HANGAR THEME — Sci-Fi Starship Bay Environment
+   Pure visual overlay: does NOT alter any IDs, classes,
+   form actions, input names or backend logic.
+   ============================================================ */
+
+/* ── 1  CUSTOM PROPERTIES ────────────────────────────────── */
+:root{
+  /* Override existing variables so every rule that references
+     --bg, --card, --accent, --muted auto-adapts */
+  --bg:      #0a0e17;
+  --card:    rgba(12, 22, 45, 0.82);
+  --accent:  #00e5ff;
+  --muted:   #5a7a99;
+
+  /* Extended palette */
+  --hg-bg-deep:      #060a12;
+  --hg-surface:      rgba(10, 20, 42, 0.88);
+  --hg-card-border:  rgba(0, 229, 255, 0.12);
+  --hg-card-glow:    0 0 30px rgba(0, 229, 255, 0.06);
+  --hg-accent2:      #2979ff;
+  --hg-neon-pink:    #ff2d95;
+  --hg-neon-green:   #00e676;
+  --hg-text:         #d0dce8;
+  --hg-text-dim:     #3d5a75;
+  --hg-input-bg:     rgba(5, 12, 30, 0.65);
+  --hg-input-border: rgba(0, 229, 255, 0.18);
+  --hg-input-focus:  rgba(0, 229, 255, 0.45);
+  --hg-transition:   0.25s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── 2  KEYFRAMES ────────────────────────────────────────── */
+@keyframes hgScanDown{
+  0%   { top:-2px;  opacity:0 }
+  3%   { opacity:.35 }
+  97%  { opacity:.35 }
+  100% { top:100vh; opacity:0 }
+}
+@keyframes hgIntroFade{
+  0%   { opacity:1 }
+  100% { opacity:0; visibility:hidden }
+}
+@keyframes hgSweepLine{
+  0%   { transform:scaleX(0); opacity:1 }
+  60%  { transform:scaleX(1); opacity:.8 }
+  100% { transform:scaleX(1); opacity:0 }
+}
+@keyframes hgAmbientPulse{
+  0%,100% { opacity:.35 }
+  50%     { opacity:.55 }
+}
+@keyframes hgBorderShimmer{
+  0%   { background-position:200% center }
+  100% { background-position:-200% center }
+}
+@keyframes hgGlowPulse{
+  0%,100% { box-shadow:0 0 8px rgba(0,229,255,.12), inset 0 0 8px rgba(0,229,255,.04) }
+  50%     { box-shadow:0 0 18px rgba(0,229,255,.18), inset 0 0 12px rgba(0,229,255,.06) }
+}
+@keyframes hgRipple{
+  to { transform:scale(80); opacity:0 }
+}
+@keyframes hgFloatDot{
+  0%,100% { transform:translateY(0) scale(1); opacity:.4 }
+  50%     { transform:translateY(-18px) scale(1.2); opacity:.7 }
+}
+
+/* ── 3  SELECTION & SCROLLBAR ────────────────────────────── */
+::selection{background:rgba(0,229,255,.25);color:#fff}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:rgba(5,10,22,.6)}
+::-webkit-scrollbar-thumb{background:rgba(0,229,255,.22);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,229,255,.38)}
+
+/* ── 4  BODY & BACKGROUND ───────────────────────────────── */
+body{
+  color:var(--hg-text);
+  background:
+    /* Faint grid */
+    linear-gradient(rgba(0,229,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.025) 1px, transparent 1px),
+    /* Ambient light pools */
+    radial-gradient(ellipse 600px 400px at 15% 20%, rgba(0,229,255,.045) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 85% 75%, rgba(41,121,255,.035) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(255,45,149,.02) 0%, transparent 70%),
+    /* Base gradient */
+    linear-gradient(170deg, #0a0e17 0%, #0c1628 40%, #0a0e17 100%);
+  background-size:
+    50px 50px,
+    50px 50px,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%;
+  background-attachment:fixed;
+}
+
+/* ── 5  INTRO OVERLAY (injected by JS) ───────────────────── */
+#hangar-intro{
+  position:fixed; inset:0;
+  background:var(--hg-bg-deep);
+  z-index:99999;
+  pointer-events:none;
+  animation:hgIntroFade .8s 1.1s ease forwards;
+}
+#hangar-intro::before,
+#hangar-intro::after{
+  content:'';position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  box-shadow:0 0 30px var(--accent),0 0 60px rgba(0,229,255,.4);
+  animation:hgSweepLine 1s ease-out forwards;
+}
+#hangar-intro::before{top:calc(50% - 30px)}
+#hangar-intro::after {top:calc(50% + 30px);animation-delay:.1s}
+
+/* ── 6  SCANNING BEAM (injected by JS) ───────────────────── */
+#hangar-scan{
+  position:fixed;left:0;right:0;top:-2px;
+  height:2px;
+  background:linear-gradient(90deg,transparent 0%,var(--accent) 30%,var(--accent) 70%,transparent 100%);
+  box-shadow:0 0 12px var(--accent),0 0 25px rgba(0,229,255,.3);
+  opacity:0;
+  animation:hgScanDown 8s 2s linear infinite;
+  pointer-events:none;
+  z-index:9998;
+}
+
+/* ── 7  AMBIENT DOTS (injected by JS) ────────────────────── */
+.hg-dot{
+  position:fixed;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 6px var(--accent);
+  pointer-events:none;
+  z-index:0;
+  animation:hgFloatDot 6s ease-in-out infinite;
+}
+
+/* ── 8  TYPOGRAPHY ───────────────────────────────────────── */
+h1,h2,h3,h4{
+  color:#e8f0fa;
+  text-shadow:0 0 20px rgba(0,229,255,.12);
+  letter-spacing:.3px;
+}
+p{color:var(--hg-text)}
+.muted{color:var(--hg-text-dim)}
+code{
+  background:rgba(0,229,255,.08);
+  color:var(--accent);
+  padding:2px 6px;
+  border-radius:4px;
+  font-size:12px;
+}
+
+/* ── 9  CARDS / PANELS ───────────────────────────────────── */
+.card,
+.login-card,
+.page,
+.megger_test_viewer .container,
+.meta{
+  background:var(--card);
+  border:1px solid var(--hg-card-border);
+  box-shadow:var(--hg-card-glow);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  position:relative;
+  transition:border-color var(--hg-transition), box-shadow var(--hg-transition);
+  animation:hgGlowPulse 6s ease-in-out infinite;
+}
+.card:hover,
+.login-card:hover{
+  border-color:rgba(0,229,255,.25);
+  box-shadow:0 0 40px rgba(0,229,255,.1);
+}
+
+/* Corner bracket accents on cards */
+.card::before,
+.card::after{
+  content:'';position:absolute;
+  width:14px;height:14px;
+  pointer-events:none;
+  z-index:2;
+  transition:all var(--hg-transition);
+}
+.card::before{
+  top:-1px;left:-1px;
+  border-top:2px solid var(--accent);
+  border-left:2px solid var(--accent);
+}
+.card::after{
+  bottom:-1px;right:-1px;
+  border-bottom:2px solid var(--accent);
+  border-right:2px solid var(--accent);
+}
+.card:hover::before,
+.card:hover::after{
+  width:22px;height:22px;
+  filter:drop-shadow(0 0 4px var(--accent));
+}
+
+/* Panel active state (when child input focused) */
+.card.panel-active,
+.login-card.panel-active,
+.meta.panel-active{
+  border-color:rgba(0,229,255,.3);
+  box-shadow:0 0 35px rgba(0,229,255,.1), inset 0 0 20px rgba(0,229,255,.03);
+}
+
+/* ── 10  FORM ELEMENTS ───────────────────────────────────── */
+input[type=text],
+input[type=number],
+input[type=email],
+input[type=password],
+input[type=date],
+select,
+textarea{
+  background:var(--hg-input-bg);
+  border:1px solid var(--hg-input-border);
+  color:var(--hg-text);
+  border-radius:6px;
+  transition:all var(--hg-transition);
+  caret-color:var(--accent);
+}
+input[type=text]:focus,
+input[type=number]:focus,
+input[type=email]:focus,
+input[type=password]:focus,
+input[type=date]:focus,
+select:focus,
+textarea:focus{
+  outline:none;
+  border-color:var(--hg-input-focus);
+  box-shadow:0 0 0 3px rgba(0,229,255,.1), 0 0 20px rgba(0,229,255,.08);
+  background:rgba(5,15,35,.8);
+}
+input::placeholder,
+textarea::placeholder{color:var(--hg-text-dim)}
+
+/* Styled select arrows */
+select{
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300e5ff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  padding-right:30px;
+}
+
+/* Checkbox styling */
+input[type=checkbox]{
+  appearance:none;
+  -webkit-appearance:none;
+  width:16px;height:16px;
+  border:1.5px solid var(--hg-input-border);
+  border-radius:3px;
+  background:var(--hg-input-bg);
+  cursor:pointer;
+  position:relative;
+  transition:all .2s;
+  flex-shrink:0;
+}
+input[type=checkbox]:checked{
+  background:var(--accent);
+  border-color:var(--accent);
+  box-shadow:0 0 8px rgba(0,229,255,.3);
+}
+input[type=checkbox]:checked::after{
+  content:'✓';
+  position:absolute;
+  top:-1px;left:2px;
+  font-size:12px;
+  color:#0a0e17;
+  font-weight:700;
+}
+
+label{color:var(--hg-text-dim)}
+.form-group label{color:#8faabe}
+
+/* ── 11  BUTTONS ─────────────────────────────────────────── */
+button{
+  background:linear-gradient(135deg, rgba(0,229,255,.15) 0%, rgba(41,121,255,.2) 100%);
+  color:#e0f0ff;
+  border:1px solid rgba(0,229,255,.25);
+  position:relative;
+  overflow:hidden;
+  transition:all var(--hg-transition);
+  text-shadow:0 0 8px rgba(0,229,255,.3);
+  letter-spacing:.3px;
+}
+button:hover{
+  background:linear-gradient(135deg, rgba(0,229,255,.25) 0%, rgba(41,121,255,.3) 100%);
+  border-color:rgba(0,229,255,.45);
+  box-shadow:0 0 20px rgba(0,229,255,.15), 0 4px 15px rgba(0,0,0,.3);
+  transform:translateY(-1px);
+  color:#fff;
+}
+button:active{
+  transform:translateY(0) scale(.97);
+  box-shadow:0 0 30px rgba(0,229,255,.25), inset 0 0 15px rgba(0,229,255,.1);
+}
+
+/* Secondary / Ghost buttons */
+button.secondary,
+button.ghost{
+  background:rgba(10,20,40,.6);
+  color:var(--accent);
+  border:1px solid rgba(0,229,255,.15);
+}
+button.secondary:hover,
+button.ghost:hover{
+  background:rgba(0,229,255,.08);
+  border-color:rgba(0,229,255,.35);
+  box-shadow:0 0 15px rgba(0,229,255,.1);
+}
+
+/* Primary button (login page) */
+.btn-primary{
+  background:linear-gradient(135deg, rgba(0,229,255,.2) 0%, rgba(41,121,255,.25) 50%, rgba(0,229,255,.2) 100%);
+  background-size:200% 100%;
+  border:1px solid rgba(0,229,255,.3);
+  color:#fff;
+  text-shadow:0 0 10px rgba(0,229,255,.4);
+  animation:hgBorderShimmer 4s linear infinite;
+  transition:all var(--hg-transition);
+}
+.btn-primary:hover{
+  background-size:200% 100%;
+  border-color:rgba(0,229,255,.55);
+  box-shadow:0 0 25px rgba(0,229,255,.2), 0 4px 15px rgba(0,0,0,.3);
+  transform:translateY(-2px);
+}
+.btn-primary:active{
+  transform:translateY(0) scale(.97);
+}
+.btn-primary:disabled{
+  background:rgba(30,40,60,.5);
+  border-color:rgba(60,80,100,.3);
+  color:rgba(100,120,140,.6);
+  text-shadow:none;
+  animation:none;
+}
+
+/* .btn class (megger pages) */
+.btn{
+  background:linear-gradient(135deg, rgba(0,229,255,.15) 0%, rgba(41,121,255,.2) 100%);
+  color:#e0f0ff;
+  border:1px solid rgba(0,229,255,.25);
+  transition:all var(--hg-transition);
+}
+.btn:hover{
+  background:linear-gradient(135deg, rgba(0,229,255,.25) 0%, rgba(41,121,255,.3) 100%);
+  border-color:rgba(0,229,255,.45);
+  box-shadow:0 0 15px rgba(0,229,255,.15);
+  transform:translateY(-1px);
+}
+.btn.secondary{
+  background:rgba(10,20,40,.6);
+  color:var(--accent);
+  border:1px solid rgba(0,229,255,.15);
+}
+.btn.secondary:hover{
+  background:rgba(0,229,255,.08);
+  border-color:rgba(0,229,255,.35);
+}
+
+/* Ripple effect element (injected by JS) */
+.hg-ripple{
+  position:absolute;
+  width:4px;height:4px;
+  background:rgba(0,229,255,.3);
+  border-radius:50%;
+  transform:scale(0);
+  animation:hgRipple .6s ease-out;
+  pointer-events:none;
+}
+
+/* ── 12  TABLES ──────────────────────────────────────────── */
+table{border-collapse:collapse}
+th{
+  background:rgba(0,229,255,.06);
+  color:#b0d0e8;
+  border-bottom:1px solid rgba(0,229,255,.15);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  font-size:12px;
+}
+td{
+  border-bottom:1px solid rgba(0,229,255,.06);
+  color:var(--hg-text);
+}
+th,td{border-color:rgba(0,229,255,.08)}
+tr:hover td{background:rgba(0,40,80,.85);color:#e0ecf4}
+.panel-table th{background:rgba(0,229,255,.08);color:#b0d0e8}
+.panel-table td{border-color:rgba(0,229,255,.1)}
+.panel-table th,
+.panel-table td{border-color:rgba(0,229,255,.12)}
+
+/* ── 13  HEADER (index.html) ─────────────────────────────── */
+header{
+  background:linear-gradient(90deg, rgba(5,15,35,.92) 0%, rgba(10,25,55,.88) 100%);
+  border-bottom:1px solid rgba(0,229,255,.12);
+  box-shadow:0 2px 20px rgba(0,0,0,.4), 0 1px 0 rgba(0,229,255,.08);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+header.no-blur{
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  background:linear-gradient(90deg, rgba(5,15,35,.97) 0%, rgba(10,25,55,.95) 100%);
+}
+header h1{
+  color:#fff;
+  text-shadow:0 0 20px rgba(0,229,255,.25);
+}
+header p{color:rgba(200,220,240,.7)}
+
+/* ── 14  TOAST ───────────────────────────────────────────── */
+.toast{
+  background:rgba(8,18,38,.95);
+  border:1px solid rgba(0,229,255,.2);
+  box-shadow:0 4px 25px rgba(0,0,0,.5), 0 0 15px rgba(0,229,255,.08);
+  backdrop-filter:blur(10px);
+  color:#e0f0ff;
+}
+.toast.error{
+  background:rgba(40,8,12,.95);
+  border-color:rgba(255,23,68,.3);
+  box-shadow:0 4px 25px rgba(0,0,0,.5), 0 0 15px rgba(255,23,68,.1);
+}
+.toast.info{
+  background:rgba(8,18,38,.95);
+  border-left:3px solid var(--accent);
+}
+
+/* ── 15  WELCOME BANNER (index.html) ─────────────────────── */
+.welcome-banner{
+  background:linear-gradient(135deg, rgba(0,229,255,.06) 0%, rgba(41,121,255,.04) 100%);
+  border:1px solid rgba(0,229,255,.12);
+  border-left:4px solid var(--accent);
+  box-shadow:0 2px 15px rgba(0,229,255,.05);
+}
+.welcome-banner h3{color:var(--accent);text-shadow:0 0 15px rgba(0,229,255,.2)}
+.welcome-banner p{color:var(--hg-text-dim)}
+.welcome-banner .datetime{color:var(--hg-text)}
+
+/* ── 16  CHECKLIST (index.html) ──────────────────────────── */
+.checklist label{color:var(--hg-text);transition:color .2s}
+.checklist label:hover{color:#fff}
+
+/* ── 17  VIEW TOGGLE & HEADER TOGGLE (index.html) ────────── */
+#view-toggle{
+  background:linear-gradient(135deg, rgba(0,229,255,.18), rgba(41,121,255,.22));
+  border:1px solid rgba(0,229,255,.25);
+  color:#fff;
+  box-shadow:0 4px 18px rgba(0,0,0,.4), 0 0 10px rgba(0,229,255,.1);
+}
+#view-toggle:hover{
+  box-shadow:0 6px 25px rgba(0,0,0,.5), 0 0 20px rgba(0,229,255,.2);
+  border-color:rgba(0,229,255,.45);
+}
+#header-toggle{
+  background:rgba(15,25,50,.85);
+  border:1px solid rgba(0,229,255,.12);
+  color:var(--hg-text);
+  box-shadow:0 4px 18px rgba(0,0,0,.4);
+}
+#header-toggle:hover{
+  background:rgba(0,229,255,.08);
+  border-color:rgba(0,229,255,.3);
+}
+
+/* ── 18  LOGIN PAGE ──────────────────────────────────────── */
+.login-container .login-card{
+  background:rgba(12,22,45,.88);
+  border:1px solid rgba(0,229,255,.12);
+  box-shadow:0 10px 60px rgba(0,0,0,.6), 0 0 40px rgba(0,229,255,.05);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+.logo-section h1{
+  color:var(--accent);
+  text-shadow:0 0 20px rgba(0,229,255,.3);
+}
+.logo-section p{color:var(--hg-text-dim)}
+.divider{color:var(--hg-text-dim)}
+.divider::before,.divider::after{background:rgba(0,229,255,.1)}
+.toggle-form{color:var(--hg-text-dim)}
+.toggle-form a{color:var(--accent)}
+.toggle-form a:hover{color:#fff;text-shadow:0 0 10px rgba(0,229,255,.3)}
+.error-msg{
+  background:rgba(255,23,68,.08);
+  border:1px solid rgba(255,23,68,.25);
+  color:#ff6b8a;
+}
+.success-msg{
+  background:rgba(0,230,118,.08);
+  border:1px solid rgba(0,230,118,.25);
+  color:#69f0ae;
+}
+.forgot-password a{color:var(--accent)}
+.password-toggle .toggle-btn{
+  background:none;
+  border:0;
+  opacity:.6;
+  transition:opacity .2s;
+}
+.password-toggle .toggle-btn:hover{opacity:1}
+
+/* ── 19  LOAD BALANCING ──────────────────────────────────── */
+.bars{
+  background:rgba(5,12,28,.6);
+  border:1px solid rgba(0,229,255,.08);
+  border-radius:8px;
+}
+.bar .fill{
+  background:linear-gradient(180deg, var(--accent), var(--hg-accent2));
+  box-shadow:0 0 10px rgba(0,229,255,.3);
+  border-radius:6px;
+}
+.bar .label, .label{color:var(--hg-text)}
+.summary .item{
+  background:rgba(10,20,42,.7);
+  border:1px solid rgba(0,229,255,.08);
+  box-shadow:0 1px 8px rgba(0,0,0,.2);
+  color:var(--hg-text);
+}
+.hint{color:var(--hg-text-dim)}
+
+/* Tabs */
+.tabs .tab,.tab{
+  background:rgba(10,20,42,.6);
+  border:1px solid rgba(0,229,255,.08);
+  color:var(--hg-text-dim);
+  cursor:pointer;
+  transition:all var(--hg-transition);
+}
+.tabs .tab:hover,.tab:hover{
+  border-color:rgba(0,229,255,.2);
+  color:var(--hg-text);
+}
+.tabs .tab.active,.tab.active{
+  background:linear-gradient(180deg, rgba(0,229,255,.08), rgba(0,229,255,.03));
+  border-color:rgba(0,229,255,.25);
+  color:var(--accent);
+  box-shadow:0 0 10px rgba(0,229,255,.08);
+}
+
+/* ── 20  BACK-HOME / NAV BUTTONS ─────────────────────────── */
+.back-home-btn{
+  background:linear-gradient(135deg, rgba(0,229,255,.15), rgba(41,121,255,.2));
+  border:1px solid rgba(0,229,255,.25);
+  color:#e0f0ff;
+  box-shadow:0 2px 15px rgba(0,0,0,.4), 0 0 8px rgba(0,229,255,.08);
+}
+.back-home-btn:hover{
+  background:linear-gradient(135deg, rgba(0,229,255,.25), rgba(41,121,255,.3));
+  border-color:rgba(0,229,255,.45);
+  box-shadow:0 4px 20px rgba(0,0,0,.5), 0 0 15px rgba(0,229,255,.15);
+}
+.view-mtr-btn{
+  background:linear-gradient(135deg, rgba(0,230,118,.15), rgba(0,200,83,.2));
+  border:1px solid rgba(0,230,118,.25);
+  color:#e0fff0;
+  box-shadow:0 2px 15px rgba(0,0,0,.4), 0 0 8px rgba(0,230,118,.08);
+}
+.view-mtr-btn:hover{
+  background:linear-gradient(135deg, rgba(0,230,118,.25), rgba(0,200,83,.3));
+  border-color:rgba(0,230,118,.45);
+  box-shadow:0 4px 20px rgba(0,0,0,.5), 0 0 15px rgba(0,230,118,.15);
+}
+
+/* ── 21  MEGGER TEST FORM ────────────────────────────────── */
+.page{
+  background:rgba(12,22,45,.92);
+  border:1px solid rgba(0,229,255,.1);
+  box-shadow:0 2px 30px rgba(0,0,0,.4), 0 0 20px rgba(0,229,255,.03);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.meta{
+  border:1px solid rgba(0,229,255,.12);
+  background:rgba(8,18,38,.6);
+}
+.meta label{color:#8faabe}
+
+/* ── 22  MEGGER TEST VIEWER ──────────────────────────────── */
+body > .container{
+  background:rgba(12,22,45,.88);
+  border:1px solid rgba(0,229,255,.1);
+  box-shadow:0 2px 30px rgba(0,0,0,.4);
+}
+
+/* ── 23  LOAD BALANCING RECORDS ──────────────────────────── */
+.empty{color:var(--hg-text-dim)}
+
+/* ── 24  PAGE ERROR ──────────────────────────────────────── */
+.page-error{
+  background:rgba(255,23,68,.06);
+  border:1px solid rgba(255,23,68,.2);
+  color:#ff6b8a;
+}
+
+/* ── 25  RESPONSIVE MOBILE-VIEW OVERRIDES ────────────────── */
+body.mobile-view .card{
+  background:rgba(12,22,45,.9);
+}
+
+/* ── 26  LIGHT STRIP ACCENTS ─────────────────────────────── */
+/* Horizontal neon strip at top of cards */
+.card>.hangar-strip,
+.login-card>.hangar-strip{
+  position:absolute;
+  top:0;left:10%;right:10%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  opacity:.5;
+  pointer-events:none;
+}
+
+/* ── 27  TABLE SCROLL CONTAINER ──────────────────────────── */
+.table-scroll{
+  border:1px solid rgba(0,229,255,.1);
+  border-radius:6px;
+}
+
+/* ── 28  DELETE BUTTON (red) ─────────────────────────────── */
+button[style*="background:#e53e3e"],
+button[style*="background:#d9534f"]{
+  background:linear-gradient(135deg, rgba(255,23,68,.2), rgba(200,20,50,.25)) !important;
+  border:1px solid rgba(255,23,68,.3) !important;
+  color:#ff8a9e !important;
+}
+button[style*="background:#e53e3e"]:hover,
+button[style*="background:#d9534f"]:hover{
+  background:linear-gradient(135deg, rgba(255,23,68,.35), rgba(200,20,50,.4)) !important;
+  border-color:rgba(255,23,68,.5) !important;
+  box-shadow:0 0 15px rgba(255,23,68,.15) !important;
+}
+
+/* ── 29  BOTTOM SIGN BLOCKS (megger) ─────────────────────── */
+.bottom-sign .sign-block{color:var(--hg-text)}
+
+/* ── 30  PRINT — revert to clean look ────────────────────── */
+@media print{
+  body{
+    background:#fff !important;
+    color:#111 !important;
+  }
+  .card,.login-card,.page,.meta{
+    background:#fff !important;
+    border-color:#ddd !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+  }
+  .card::before,.card::after{display:none !important}
+  #hangar-intro,#hangar-scan,#hangar-bg,.hg-dot,.hangar-strip{display:none !important}
+  th{background:#f4f4f4 !important;color:#111 !important}
+  td{color:#111 !important}
+  h1,h2,h3,h4{color:#111 !important;text-shadow:none !important}
+  label{color:#333 !important}
+  input,select,textarea{
+    background:#fff !important;
+    color:#111 !important;
+    border-color:#ccc !important;
+  }
+  button{
+    background:#0b78d1 !important;
+    border:none !important;
+    color:#fff !important;
+    text-shadow:none !important;
+  }
+}
+
+/* ── 31  PARALLAX BACKGROUND (injected by JS) ────────────── */
+#hangar-bg{
+  position:fixed;
+  inset:-20px;
+  z-index:-1;
+  pointer-events:none;
+  transition:transform .15s ease-out;
+  background:
+    linear-gradient(rgba(0,229,255,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.02) 1px, transparent 1px),
+    radial-gradient(ellipse 700px 500px at 20% 30%, rgba(0,229,255,.05) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 400px at 80% 70%, rgba(41,121,255,.04) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 55% 45%, rgba(255,45,149,.02) 0%, transparent 70%);
+  background-size:
+    50px 50px,
+    50px 50px,
+    100% 100%,
+    100% 100%,
+    100% 100%;
+}
+
+/* ── 32  DARK INPUT ICONS ────────────────────────────────── */
+input[type=date]::-webkit-calendar-picker-indicator{
+  filter:invert(.7) sepia(.5) saturate(3) hue-rotate(160deg);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   THEME VARIANTS — activated via data-theme on <body>
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── THEME: DARK ────────────────────────────────────────── */
+body[data-theme="dark"]{
+  --bg:#1a1a1a; --card:rgba(38,38,38,.92); --accent:#64b5f6;
+  --muted:#9e9e9e; --hg-text:#e0e0e0; --hg-text-dim:#888;
+  --hg-bg-deep:#111; --hg-surface:rgba(30,30,30,.9);
+  --hg-card-border:rgba(100,181,246,.12); --hg-accent2:#90caf9;
+  --hg-input-bg:rgba(25,25,25,.7); --hg-input-border:rgba(100,181,246,.2);
+  --hg-input-focus:rgba(100,181,246,.45);
+  background:#1a1a1a !important;
+  color:#e0e0e0;
+}
+body[data-theme="dark"] header{
+  background:linear-gradient(90deg,rgba(28,28,28,.95),rgba(42,42,42,.92)) !important;
+  border-bottom-color:rgba(100,181,246,.1);
+}
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .login-card{
+  background:rgba(38,38,38,.92); border-color:rgba(100,181,246,.08);
+}
+body[data-theme="dark"] h1,body[data-theme="dark"] h2,body[data-theme="dark"] h3{color:#f5f5f5}
+body[data-theme="dark"] label{color:#bbb}
+body[data-theme="dark"] input,body[data-theme="dark"] select,body[data-theme="dark"] textarea{
+  background:rgba(25,25,25,.7); color:#e0e0e0; border-color:rgba(100,181,246,.15);
+}
+body[data-theme="dark"] button{background:#64b5f6; color:#111}
+body[data-theme="dark"] button.secondary{background:rgba(100,181,246,.12); color:#90caf9; border-color:rgba(100,181,246,.2)}
+body[data-theme="dark"] th{background:rgba(50,50,50,.9); color:#ccc}
+body[data-theme="dark"] td{color:#ddd; border-color:rgba(255,255,255,.06)}
+body[data-theme="dark"] tr:hover td{background:rgba(100,181,246,.08)}
+body[data-theme="dark"] .welcome-banner{background:linear-gradient(135deg,rgba(38,38,38,.95),rgba(45,45,45,.9)); border-left-color:#64b5f6}
+body[data-theme="dark"] .welcome-banner h3{color:#64b5f6}
+body[data-theme="dark"] .welcome-banner p{color:#bbb}
+body[data-theme="dark"] .checklist label{color:#ddd}
+body[data-theme="dark"] #hangar-bg{
+  background:radial-gradient(ellipse 600px 400px at 20% 30%,rgba(100,181,246,.04) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 350px at 80% 70%,rgba(144,202,249,.03) 0%,transparent 70%) !important;
+}
+
+/* ── THEME: FUTURISTIC ──────────────────────────────────── */
+body[data-theme="futuristic"]{
+  --bg:#050505; --card:rgba(8,8,15,.94); --accent:#00ffcc;
+  --muted:#5a8a7a; --hg-text:#00ffcc; --hg-text-dim:#2a6b5a;
+  --hg-bg-deep:#020204; --hg-surface:rgba(5,5,12,.92);
+  --hg-card-border:rgba(0,255,204,.18); --hg-accent2:#ff00ff;
+  --hg-neon-pink:#ff00ff; --hg-neon-green:#00ffcc;
+  --hg-input-bg:rgba(5,5,12,.8); --hg-input-border:rgba(0,255,204,.25);
+  --hg-input-focus:rgba(0,255,204,.5);
+  background:#050505 !important;
+  color:#00ffcc;
+  font-family:'Courier New',Consolas,'Lucida Console',monospace;
+}
+body[data-theme="futuristic"] header{
+  background:linear-gradient(90deg,rgba(5,5,12,.96),rgba(10,8,20,.94)) !important;
+  border-bottom:1px solid rgba(0,255,204,.2);
+  box-shadow:0 0 20px rgba(0,255,204,.08), 0 2px 8px rgba(0,0,0,.5);
+}
+body[data-theme="futuristic"] .card,
+body[data-theme="futuristic"] .login-card{
+  background:rgba(8,8,15,.94); border:1px solid rgba(0,255,204,.15);
+  box-shadow:0 0 15px rgba(0,255,204,.06), inset 0 0 15px rgba(0,255,204,.02);
+}
+body[data-theme="futuristic"] h1,body[data-theme="futuristic"] h2{color:#00ffcc; text-shadow:0 0 12px rgba(0,255,204,.3)}
+body[data-theme="futuristic"] h3{color:#ff00ff; text-shadow:0 0 10px rgba(255,0,255,.25)}
+body[data-theme="futuristic"] label{color:#5abfa8; font-family:inherit}
+body[data-theme="futuristic"] input,body[data-theme="futuristic"] select,body[data-theme="futuristic"] textarea{
+  background:rgba(5,5,12,.8); color:#00ffcc; border:1px solid rgba(0,255,204,.22); font-family:inherit;
+}
+body[data-theme="futuristic"] input:focus,body[data-theme="futuristic"] select:focus,body[data-theme="futuristic"] textarea:focus{
+  box-shadow:0 0 12px rgba(0,255,204,.3), 0 0 4px rgba(255,0,255,.15);
+}
+body[data-theme="futuristic"] button{background:rgba(0,255,204,.15); color:#00ffcc; border:1px solid rgba(0,255,204,.35); box-shadow:0 0 8px rgba(0,255,204,.12)}
+body[data-theme="futuristic"] button:hover{box-shadow:0 0 18px rgba(0,255,204,.3); background:rgba(0,255,204,.25)}
+body[data-theme="futuristic"] button.secondary{background:rgba(255,0,255,.08); color:#ff00ff; border-color:rgba(255,0,255,.25)}
+body[data-theme="futuristic"] th{background:rgba(0,255,204,.08); color:#00ffcc; border-color:rgba(0,255,204,.15)}
+body[data-theme="futuristic"] td{color:#b0e8d8; border-color:rgba(0,255,204,.08)}
+body[data-theme="futuristic"] tr:hover td{background:rgba(0,255,204,.06)}
+body[data-theme="futuristic"] .welcome-banner{background:rgba(8,8,15,.9); border-left-color:#ff00ff}
+body[data-theme="futuristic"] .welcome-banner h3{color:#ff00ff}
+body[data-theme="futuristic"] .welcome-banner p{color:#5abfa8}
+body[data-theme="futuristic"] .checklist label{color:#b0e8d8}
+body[data-theme="futuristic"] #hangar-bg{
+  background:radial-gradient(ellipse 600px 400px at 15% 25%,rgba(0,255,204,.06) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 350px at 85% 75%,rgba(255,0,255,.04) 0%,transparent 70%) !important;
+}
+
+/* ── THEME: EMERALD FOREST ──────────────────────────────── */
+body[data-theme="emerald"]{
+  --bg:#0a1a0e; --card:rgba(12,32,18,.9); --accent:#d4a626;
+  --muted:#6b8e6b; --hg-text:#c8e0c8; --hg-text-dim:#4a6e4a;
+  --hg-bg-deep:#060f08; --hg-surface:rgba(10,28,14,.9);
+  --hg-card-border:rgba(212,166,38,.15); --hg-accent2:#2d8a4e;
+  --hg-input-bg:rgba(8,22,12,.75); --hg-input-border:rgba(45,138,78,.25);
+  --hg-input-focus:rgba(212,166,38,.4);
+  background:#0a1a0e !important;
+  color:#c8e0c8;
+}
+body[data-theme="emerald"] header{
+  background:linear-gradient(90deg,rgba(10,28,14,.94),rgba(18,45,25,.9)) !important;
+  border-bottom:1px solid rgba(212,166,38,.15);
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+}
+body[data-theme="emerald"] .card,
+body[data-theme="emerald"] .login-card{
+  background:rgba(12,32,18,.9); border:1px solid rgba(45,138,78,.15); border-radius:12px;
+}
+body[data-theme="emerald"] h1,body[data-theme="emerald"] h2,body[data-theme="emerald"] h3{color:#d4a626}
+body[data-theme="emerald"] label{color:#8ab88a}
+body[data-theme="emerald"] input,body[data-theme="emerald"] select,body[data-theme="emerald"] textarea{
+  background:rgba(8,22,12,.75); color:#c8e0c8; border:1px solid rgba(45,138,78,.22); border-radius:8px;
+}
+body[data-theme="emerald"] button{background:#2d8a4e; color:#fff; border-radius:8px}
+body[data-theme="emerald"] button.secondary{background:rgba(212,166,38,.12); color:#d4a626; border:1px solid rgba(212,166,38,.2); border-radius:8px}
+body[data-theme="emerald"] th{background:rgba(45,138,78,.15); color:#d4a626; border-color:rgba(45,138,78,.12)}
+body[data-theme="emerald"] td{color:#a8cca8; border-color:rgba(45,138,78,.1)}
+body[data-theme="emerald"] tr:hover td{background:rgba(45,138,78,.1)}
+body[data-theme="emerald"] .welcome-banner{background:linear-gradient(135deg,rgba(12,32,18,.95),rgba(18,42,22,.9)); border-left-color:#d4a626}
+body[data-theme="emerald"] .welcome-banner h3{color:#d4a626}
+body[data-theme="emerald"] .welcome-banner p{color:#8ab88a}
+body[data-theme="emerald"] .checklist label{color:#b0d4b0}
+body[data-theme="emerald"] #hangar-bg{
+  background:radial-gradient(ellipse 600px 400px at 20% 30%,rgba(45,138,78,.06) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 350px at 80% 70%,rgba(212,166,38,.04) 0%,transparent 70%) !important;
+}
+
+/* ── THEME: MIDNIGHT PURPLE ─────────────────────────────── */
+body[data-theme="midnight"]{
+  --bg:#0e0818; --card:rgba(18,10,38,.9); --accent:#b388ff;
+  --muted:#7a6a9a; --hg-text:#d4c8f0; --hg-text-dim:#5a4a7a;
+  --hg-bg-deep:#080412; --hg-surface:rgba(14,8,32,.9);
+  --hg-card-border:rgba(179,136,255,.15); --hg-accent2:#e040fb;
+  --hg-input-bg:rgba(12,6,28,.75); --hg-input-border:rgba(179,136,255,.22);
+  --hg-input-focus:rgba(179,136,255,.45);
+  background:#0e0818 !important;
+  color:#d4c8f0;
+}
+body[data-theme="midnight"] header{
+  background:linear-gradient(90deg,rgba(14,8,32,.95),rgba(28,16,55,.9)) !important;
+  border-bottom:1px solid rgba(179,136,255,.12);
+  box-shadow:0 2px 15px rgba(179,136,255,.06);
+}
+body[data-theme="midnight"] .card,
+body[data-theme="midnight"] .login-card{
+  background:rgba(18,10,38,.88); border:1px solid rgba(179,136,255,.1);
+  box-shadow:0 0 20px rgba(179,136,255,.04);
+}
+body[data-theme="midnight"] h1,body[data-theme="midnight"] h2,body[data-theme="midnight"] h3{color:#e0d0ff}
+body[data-theme="midnight"] label{color:#a090c8}
+body[data-theme="midnight"] input,body[data-theme="midnight"] select,body[data-theme="midnight"] textarea{
+  background:rgba(12,6,28,.75); color:#d4c8f0; border:1px solid rgba(179,136,255,.18);
+}
+body[data-theme="midnight"] button{background:rgba(179,136,255,.2); color:#e0d0ff; border:1px solid rgba(179,136,255,.3)}
+body[data-theme="midnight"] button:hover{background:rgba(179,136,255,.3); box-shadow:0 0 12px rgba(179,136,255,.2)}
+body[data-theme="midnight"] button.secondary{background:rgba(224,64,251,.1); color:#e040fb; border-color:rgba(224,64,251,.2)}
+body[data-theme="midnight"] th{background:rgba(179,136,255,.1); color:#d0c0f0; border-color:rgba(179,136,255,.1)}
+body[data-theme="midnight"] td{color:#c0b0e0; border-color:rgba(179,136,255,.06)}
+body[data-theme="midnight"] tr:hover td{background:rgba(179,136,255,.08)}
+body[data-theme="midnight"] .welcome-banner{background:linear-gradient(135deg,rgba(18,10,38,.95),rgba(28,16,55,.88)); border-left-color:#b388ff}
+body[data-theme="midnight"] .welcome-banner h3{color:#b388ff}
+body[data-theme="midnight"] .welcome-banner p{color:#a090c8}
+body[data-theme="midnight"] .checklist label{color:#c8b8e8}
+body[data-theme="midnight"] #hangar-bg{
+  background:radial-gradient(ellipse 600px 400px at 20% 30%,rgba(179,136,255,.06) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 350px at 80% 70%,rgba(224,64,251,.04) 0%,transparent 70%) !important;
+}
+
+/* ── THEME: SUNSET MINIMAL ──────────────────────────────── */
+body[data-theme="sunset"]{
+  --bg:#faf5ef; --card:rgba(255,252,248,.95); --accent:#c0623a;
+  --muted:#8a7a6a; --hg-text:#3d2e1e; --hg-text-dim:#a09080;
+  --hg-bg-deep:#f5efe5; --hg-surface:rgba(250,245,238,.95);
+  --hg-card-border:rgba(192,98,58,.12); --hg-accent2:#d4886a;
+  --hg-input-bg:rgba(255,252,248,.9); --hg-input-border:rgba(192,98,58,.2);
+  --hg-input-focus:rgba(192,98,58,.35);
+  background:#faf5ef !important;
+  color:#3d2e1e;
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+}
+body[data-theme="sunset"] header{
+  background:linear-gradient(90deg,rgba(192,98,58,.88),rgba(210,130,80,.85)) !important;
+  border-bottom:1px solid rgba(192,98,58,.15);
+  box-shadow:0 2px 8px rgba(120,60,20,.12);
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+body[data-theme="sunset"] header h1{color:#fff; text-shadow:none}
+body[data-theme="sunset"] header p{color:rgba(255,255,255,.85)}
+body[data-theme="sunset"] .card,
+body[data-theme="sunset"] .login-card{
+  background:rgba(255,252,248,.95); border:1px solid rgba(192,98,58,.1);
+  box-shadow:0 1px 4px rgba(120,60,20,.06);
+}
+body[data-theme="sunset"] h1,body[data-theme="sunset"] h2,body[data-theme="sunset"] h3{color:#5a3520}
+body[data-theme="sunset"] label{color:#7a6a5a}
+body[data-theme="sunset"] input,body[data-theme="sunset"] select,body[data-theme="sunset"] textarea{
+  background:#fff; color:#3d2e1e; border:1px solid rgba(192,98,58,.18);
+}
+body[data-theme="sunset"] button{background:#c0623a; color:#fff}
+body[data-theme="sunset"] button:hover{background:#a8522e}
+body[data-theme="sunset"] button.secondary{background:rgba(192,98,58,.08); color:#c0623a; border:1px solid rgba(192,98,58,.2)}
+body[data-theme="sunset"] th{background:rgba(192,98,58,.08); color:#5a3520; border-color:rgba(192,98,58,.1)}
+body[data-theme="sunset"] td{color:#4a3a2a; border-color:rgba(192,98,58,.08)}
+body[data-theme="sunset"] tr:hover td{background:rgba(192,98,58,.06)}
+body[data-theme="sunset"] .welcome-banner{background:linear-gradient(135deg,#fff8f0,#fef2e6); border-left-color:#c0623a}
+body[data-theme="sunset"] .welcome-banner h3{color:#c0623a}
+body[data-theme="sunset"] .welcome-banner p{color:#7a6a5a}
+body[data-theme="sunset"] .checklist label{color:#4a3a2a}
+body[data-theme="sunset"] .hg-dot{background:#c0623a}
+body[data-theme="sunset"] .hangar-strip{background:linear-gradient(90deg,transparent,rgba(192,98,58,.25),transparent)}
+body[data-theme="sunset"] #hangar-bg{
+  background:radial-gradient(ellipse 600px 400px at 20% 30%,rgba(192,98,58,.04) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 350px at 80% 70%,rgba(212,136,106,.03) 0%,transparent 70%) !important;
+}
+body[data-theme="sunset"] input[type=date]::-webkit-calendar-picker-indicator{filter:none}
+
