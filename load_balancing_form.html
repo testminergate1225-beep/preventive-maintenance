@@ -6,7 +6,7 @@
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <title>Load Balancing & Full Load Test - 3-Phase</title>
   <style>
-    :root{--bg:#f5f7fb;--card:#fff;--accent:#0b78d1;--muted:#6b7280}
+    :root{--bg:#053daf;--card:#685904;--accent:#0b78d1;--muted:#6b7280}
     *{box-sizing:border-box}
     body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background: var(--bg) url('images/tw_bg.png') no-repeat center top/cover;background-attachment:fixed;color:#111}
     .wrap{max-width:1100px;margin:20px auto;padding:16px}
@@ -55,6 +55,7 @@
 		div[style*="width:"]{width:100%!important}
 		.small{width:100%!important}
 	}  </style>
+  <link rel="stylesheet" href="hangar-theme.css">
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -976,5 +977,7 @@
     // compute summary periodically when storage or other pages change
     window.addEventListener('storage', ()=>{ loads = loadFromStorage(); renderLoads(); computeSummary(); });
   </script>
+  <script src="hangar-theme.js"></script>
+<script src="theme-loader.js"></script>
 </body>
 </html>

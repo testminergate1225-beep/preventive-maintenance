@@ -97,6 +97,7 @@
 		
 		@media print{.toolbar,button,header,.welcome-banner{display:none!important}main.container{padding-top:12px}}
 	</style>
+	<link rel="stylesheet" href="hangar-theme.css">
 	<!-- Firebase SDK -->
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -113,7 +114,17 @@
 				<p>Use the options below to manage your records and access related forms.</p>
 			</div>
 			<div class="header-controls">
-				<button id="toggle-blur" class="small secondary" title="Toggle header blur">Disable Blur</button>
+				<div class="theme-dropdown-wrap" style="position:relative;display:inline-block">
+					<button id="theme-toggle-btn" class="small secondary" title="Change theme">🎨 Themes ▾</button>
+					<div id="theme-dropdown" class="theme-dropdown" style="display:none;position:absolute;top:110%;left:0;min-width:185px;background:rgba(10,18,35,.96);border:1px solid rgba(0,229,255,.2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.45);z-index:2000;padding:4px 0;backdrop-filter:blur(12px)">
+						<div class="theme-option" data-theme="default" style="padding:9px 14px;cursor:pointer;font-size:13px;color:#b0d0e8;transition:background .15s">⚡ Default (Hangar)</div>
+						<div class="theme-option" data-theme="dark" style="padding:9px 14px;cursor:pointer;font-size:13px;color:#b0d0e8;transition:background .15s">🌑 Dark</div>
+						<div class="theme-option" data-theme="futuristic" style="padding:9px 14px;cursor:pointer;font-size:13px;color:#b0d0e8;transition:background .15s">🔮 Futuristic</div>
+						<div class="theme-option" data-theme="emerald" style="padding:9px 14px;cursor:pointer;font-size:13px;color:#b0d0e8;transition:background .15s">🌲 Emerald Forest</div>
+						<div class="theme-option" data-theme="midnight" style="padding:9px 14px;cursor:pointer;font-size:13px;color:#b0d0e8;transition:background .15s">🌌 Midnight Purple</div>
+						<div class="theme-option" data-theme="sunset" style="padding:9px 14px;cursor:pointer;font-size:13px;color:#b0d0e8;transition:background .15s">🌅 Sunset Minimal</div>
+					</div>
+				</div>
 				<button id="open-load-balancing" class="small" title="Open Load Balancing form">Load balancing</button>
 				<button id="go-project-monitoring" class="small" title="Open Project Monitoring">Go To Project Monitoring</button>
 				<button id="go-megger-form" class="small" title="Open Megger Test Form">Go To Megger Test Form</button>
@@ -517,7 +528,7 @@
 			}
 			document.getElementById('records-table').style.display = '';
 			emptyEl.style.display = 'none';
-			const maxShow = 10;
+			const maxShow = 15;
 			const shown = Math.min(maxShow, total);
 			records.forEach((r, idx)=>{
 				if(idx >= maxShow) return;
@@ -810,33 +821,40 @@
 		document.getElementById('view-saved-records').addEventListener('click', ()=>{ window.open('pm_records.html', '_blank'); });
 		document.getElementById('clear-all').addEventListener('click', clearAll);
 
-		const KEY_BLUR = 'epm_header_blur';
-		const headerEl = document.querySelector('header');
-		const toggleBtn = document.getElementById('toggle-blur');
+		/* ── THEME SWITCHER ─────────────────────────────────── */
+		const THEME_KEY = 'epm_selected_theme';
+		const themeBtn = document.getElementById('theme-toggle-btn');
+		const themeDropdown = document.getElementById('theme-dropdown');
 
-		function applyHeaderBlur(enabled){
-			if(!headerEl) return;
-			if(enabled){
-				headerEl.classList.remove('no-blur');
-				if(toggleBtn) toggleBtn.textContent = 'Disable Blur';
-			} else {
-				headerEl.classList.add('no-blur');
-				if(toggleBtn) toggleBtn.textContent = 'Enable Blur';
+		function applyTheme(name){
+			document.body.setAttribute('data-theme', name === 'default' ? '' : name);
+			if(name === 'default') document.body.removeAttribute('data-theme');
+			try{ localStorage.setItem(THEME_KEY, name); }catch(e){}
+			// highlight active
+			if(themeDropdown){
+				themeDropdown.querySelectorAll('.theme-option').forEach(function(opt){
+					opt.style.background = opt.getAttribute('data-theme') === name ? 'rgba(0,229,255,.15)' : '';
+				});
 			}
-			try{ localStorage.setItem(KEY_BLUR, enabled ? '1' : '0'); }catch(e){}
 		}
 
-		try{
-			const saved = localStorage.getItem(KEY_BLUR);
-			applyHeaderBlur(saved !== '0');
-		}catch(e){ applyHeaderBlur(true); }
+		// Restore saved theme
+		try{ var savedTheme = localStorage.getItem(THEME_KEY) || 'default'; applyTheme(savedTheme); }catch(e){ applyTheme('default'); }
 
-		if(toggleBtn){
-			function headerToggleHandler(){
-				const currentlyEnabled = !headerEl.classList.contains('no-blur');
-				applyHeaderBlur(!currentlyEnabled);
-			}
-			if(!toggleBtn._blurAttached){ toggleBtn.addEventListener('click', headerToggleHandler); toggleBtn._blurAttached = true; }
+		if(themeBtn && themeDropdown){
+			themeBtn.addEventListener('click', function(e){
+				e.stopPropagation();
+				themeDropdown.style.display = themeDropdown.style.display === 'none' ? 'block' : 'none';
+			});
+			themeDropdown.querySelectorAll('.theme-option').forEach(function(opt){
+				opt.addEventListener('mouseenter', function(){ this.style.background = 'rgba(0,229,255,.12)'; });
+				opt.addEventListener('mouseleave', function(){ var active = localStorage.getItem(THEME_KEY)||'default'; this.style.background = this.getAttribute('data-theme')===active ? 'rgba(0,229,255,.15)' : ''; });
+				opt.addEventListener('click', function(){
+					applyTheme(this.getAttribute('data-theme'));
+					themeDropdown.style.display = 'none';
+				});
+			});
+			document.addEventListener('click', function(){ themeDropdown.style.display = 'none'; });
 		}
 
 		function showPageError(msg){
@@ -856,5 +874,7 @@
 		window.deleteRecord = deleteRecord;
 		render();
 	</script>
+	<script src="hangar-theme.js"></script>
 </body>
 </html>
+
