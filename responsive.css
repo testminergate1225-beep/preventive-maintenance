@@ -1,0 +1,271 @@
+/* ============================================================
+   responsive.css — Shared responsive layout for all EPM pages
+   Breakpoints:  Mobile 0-600 | Tablet 601-1024 | Desktop 1025+
+   ============================================================ */
+
+/* ---------- Base reset & body defaults ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* ---------- Responsive wrapper ---------- */
+.resp-wrap{
+  width:100%;
+  max-width:1140px;
+  margin-left:auto;
+  margin-right:auto;
+  padding-left:16px;
+  padding-right:16px;
+}
+
+/* ---------- Responsive tables ---------- */
+.resp-table-wrap{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* ---------- Responsive images ---------- */
+img{max-width:100%;height:auto}
+
+/* ---------- Form element fluid sizing ---------- */
+input[type=text],
+input[type=number],
+input[type=email],
+input[type=password],
+input[type=date],
+select,
+textarea{
+  max-width:100%;
+}
+
+/* ==================================
+   TABLET  (601px – 1024px)
+   ================================== */
+@media (min-width:601px) and (max-width:1024px){
+
+  /* Generic containers used across pages */
+  .container,
+  .wrap,
+  .page,
+  .login-container{
+    max-width:92vw;
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .resp-wrap{
+    max-width:92vw;
+  }
+
+  /* Two-column grids → single column on narrow tablets */
+  .top-grid{
+    grid-template-columns:1fr !important;
+  }
+  .row{
+    grid-template-columns:1fr 1fr;
+  }
+
+  /* Tables */
+  table{
+    font-size:12px;
+  }
+  th,td{
+    padding:7px;
+  }
+
+  /* Body text scaling */
+  body{font-size:15px}
+  h1{font-size:19px}
+  h2{font-size:15px}
+  label{font-size:12.5px}
+
+  /* Toolbars */
+  .toolbar{
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  button{
+    font-size:12.5px;
+    padding:7px 10px;
+  }
+
+  /* Bars chart (load balancing) */
+  .bars{height:110px}
+
+  /* Card padding */
+  .card{padding:12px}
+
+  /* Header controls */
+  .header-controls{
+    flex-wrap:wrap;
+    gap:6px;
+  }
+}
+
+/* ==================================
+   MOBILE  (0 – 600px)
+   ================================== */
+@media (max-width:600px){
+
+  /* Containers */
+  .container,
+  .wrap,
+  .page,
+  .login-container{
+    max-width:100%;
+    padding-left:8px;
+    padding-right:8px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .resp-wrap{
+    max-width:100%;
+    padding-left:8px;
+    padding-right:8px;
+  }
+
+  /* Stack all grids to single column */
+  .grid,
+  .top-grid,
+  .row{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  /* Headings */
+  h1{font-size:16px}
+  h2{font-size:14px}
+  h3{font-size:13px}
+
+  /* Typography & labels */
+  body{font-size:14px}
+  label{font-size:12px}
+  .muted{font-size:11px}
+
+  /* Form inputs */
+  input[type=text],
+  input[type=number],
+  input[type=email],
+  input[type=password],
+  input[type=date],
+  select,
+  textarea{
+    padding:7px;
+    font-size:13px;
+  }
+
+  /* Buttons */
+  button{
+    padding:7px 10px;
+    font-size:12px;
+  }
+
+  /* Cards */
+  .card{
+    padding:10px;
+  }
+
+  /* Tables → horizontal scroll */
+  table{
+    display:block;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    font-size:11px;
+  }
+  th,td{
+    padding:5px 6px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+
+  /* Toolbars */
+  .toolbar{
+    flex-wrap:wrap;
+    gap:4px;
+  }
+
+  /* Header controls */
+  .header-controls{
+    width:100%;
+    flex-wrap:wrap;
+    gap:4px;
+  }
+
+  /* Bars chart */
+  .bars{height:90px;padding:8px}
+  .bar .label{font-size:11px}
+
+  /* Summary items */
+  .summary{
+    flex-direction:column;
+    gap:6px;
+  }
+  .summary .item{
+    min-width:unset;
+    font-size:12px;
+  }
+
+  /* Sign blocks on megger form */
+  .bottom-sign{
+    flex-direction:column;
+    gap:12px;
+  }
+  .sign-block{
+    width:100% !important;
+  }
+
+  /* Header grid (megger form) */
+  .header-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  /* Tabs */
+  .tabs{
+    flex-wrap:wrap;
+    gap:4px;
+  }
+  .tab{
+    padding:6px 8px;
+    font-size:12px;
+  }
+
+  /* Back-home / fixed buttons */
+  .back-home-btn{
+    padding:8px 12px !important;
+    font-size:11px !important;
+  }
+  .view-mtr-btn{
+    font-size:11px !important;
+    padding:8px 12px !important;
+  }
+}
+
+/* ==================================
+   DESKTOP  (1025px+)
+   ================================== */
+@media (min-width:1025px){
+  .container,
+  .wrap,
+  .page{
+    max-width:1140px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .resp-wrap{
+    max-width:1140px;
+  }
+}
+
+/* ==================================
+   Print — hide UI chrome
+   ================================== */
+@media print{
+  .toolbar,
+  button,
+  .back-home-btn,
+  .view-mtr-btn,
+  .header-controls,
+  #view-toggle,
+  #header-toggle{
+    display:none !important;
+  }
+}
