@@ -4,31 +4,78 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-  <title>Load Balancing - Printable Records</title>
+  <title>Load Balancing - Saved Records</title>
   <style>
-    body{font-family:Segoe UI,system-ui,-apple-system,'Helvetica Neue',Arial;margin:0;background:#f4f6f8;color:#111;padding:0}
-    .container{max-width:1100px;margin:30px auto;padding:18px}
-    h1{font-size:22px;margin-bottom:8px;color:#0b78d1}
-    .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-    button{background:#0b78d1;color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s}
-    button:hover{opacity:0.9;transform:translateY(-1px)}
-    button.secondary{background:#e5e7eb;color:#111}
-    .card{background:rgba(12,22,45,0.85);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:20px;margin-bottom:20px}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}
-    th{background:#f3f4f6;font-weight:600;position:sticky;top:0}
-    tr:hover{background:rgba(0,40,80,.85)}
-    .empty{text-align:center;color:#6b7280;padding:40px;font-size:14px}
-    @media (max-width:768px){
-      .container{padding:8px}
-      h1{font-size:17px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;padding:0;min-height:100vh}
+    .page-header{background:linear-gradient(135deg,#0b3d91 0%,#0b78d1 100%);color:#fff;padding:24px 32px;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+    .page-header h1{font-size:22px;font-weight:700;letter-spacing:0.3px;margin-bottom:4px}
+    .page-header .subtitle{font-size:13px;opacity:0.85;font-weight:400}
+    .container{max-width:100%;margin:0 auto;padding:20px 24px}
+    .toolbar{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+    .toolbar .record-count{margin-left:auto;font-size:13px;color:#64748b;font-weight:500}
+    .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+    .filter-bar label{font-size:12px;font-weight:600;color:#475569;white-space:nowrap}
+    .filter-bar input[type=date],.filter-bar select{padding:6px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:12px;color:#334155;background:#f8fafc}
+    .filter-bar input[type=date]:focus,.filter-bar select:focus{outline:none;border-color:#0b78d1;box-shadow:0 0 0 2px rgba(11,120,209,0.15)}
+    .filter-bar .filter-group{display:flex;align-items:center;gap:6px}
+    .filter-bar .btn-filter{padding:6px 14px;font-size:12px;border-radius:6px}
+    .filter-bar .btn-clear{padding:6px 14px;font-size:12px;border-radius:6px;background:#f1f5f9 !important;color:#64748b !important;border:1px solid #e2e8f0 !important}
+    .filter-bar .btn-clear:hover{background:#e2e8f0 !important}
+    button{border:0;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+    button:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+    .btn-primary{background:#0b78d1 !important;color:#fff !important;border:none !important}
+    .btn-primary:hover{background:#0960a8 !important}
+    .btn-secondary{background:#e2e8f0 !important;color:#334155 !important;border:none !important}
+    .btn-secondary:hover{background:#cbd5e1 !important}
+    .btn-danger{background:#ef4444 !important;color:#fff !important;border:none !important}
+    .btn-danger:hover{background:#dc2626 !important}
+    .btn-edit{background:#f59e0b !important;color:#fff !important;border:none !important}
+    .btn-edit:hover{background:#d97706 !important}
+    .btn-outline{background:transparent !important;border:1.5px solid #0b78d1 !important;color:#0b78d1 !important}
+    .btn-outline:hover{background:#0b78d1 !important;color:#fff !important}
+    .btn-sm{padding:4px 8px;font-size:11px;border-radius:4px;justify-content:center;text-align:center;min-width:48px}
+    .card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow:hidden}
+    .table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+    thead th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.4px;padding:10px 6px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+    tbody td{padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:#334155;font-weight:500;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+    tbody tr:hover{background:#f8fafc}
+    tbody tr:last-child td{border-bottom:none}
+    .cell-filename{font-weight:700;color:#0b3d91;word-wrap:break-word;overflow-wrap:break-word}
+    .cell-company{font-weight:600;color:#1e293b;word-wrap:break-word;overflow-wrap:break-word}
+    .cell-branch{font-size:11px;font-weight:700;color:#334155;word-wrap:break-word}
+    .cell-date{font-size:11px}
+    .cell-time{color:#64748b;font-size:11px}
+    .cell-total{font-weight:700;color:#059669}
+    .cell-remarks{color:#64748b;font-size:11px;word-wrap:break-word;overflow-wrap:break-word}
+    .actions-cell{display:flex;gap:4px;flex-wrap:nowrap}
+    col.col-filename{width:12%}
+    col.col-company{width:10%}
+    col.col-branch{width:8%}
+    col.col-location{width:9%}
+    col.col-date{width:7%}
+    col.col-time{width:9%}
+    col.col-panel{width:6%}
+    col.col-total{width:6%}
+    col.col-remarks{width:10%}
+    col.col-actions{width:25%}
+    .empty-state{text-align:center;padding:60px 20px;color:#94a3b8}
+    .empty-state .icon{font-size:48px;margin-bottom:12px}
+    .empty-state p{font-size:15px;margin-bottom:6px;font-weight:500}
+    .empty-state .hint{font-size:13px;color:#94a3b8}
+    @media(max-width:768px){
+      .page-header{padding:16px 18px}
+      .page-header h1{font-size:18px}
+      .container{padding:12px}
       .toolbar{gap:6px}
       button{padding:8px 12px;font-size:12px}
-      .card{padding:12px}
-      table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:11px}
-      th,td{padding:6px;white-space:nowrap}
+      table{font-size:12px}
+      thead th{padding:10px 8px;font-size:10px}
+      tbody td{padding:8px}
+      .actions-cell{flex-wrap:wrap}
     }
-    @media print{.toolbar,button{display:none}}
+    @media print{.toolbar,button,.page-header{display:none}.card{box-shadow:none}}
   </style>
   <link rel="stylesheet" href="hangar-theme.css">
   <link rel="stylesheet" href="responsive.css">
@@ -40,20 +87,75 @@
   <script src="auth-guard.js"></script>
 </head>
 <body>
+  <div class="page-header">
+    <h1>Load Balancing Records</h1>
+    <div class="subtitle">Saved printable records &amp; reports</div>
+  </div>
   <div class="container">
-    <h1>Load Balancing - Printable Records</h1>
     <div class="toolbar">
-      <button onclick="window.location.href='load_balancing_form.html'">+ Add New Printable Form</button>
-      <button onclick="print()">Print List</button>
-      <button class="secondary" onclick="window.location.href='index.html'">Back to Home</button>
+      <button class="btn-primary" onclick="window.location.href='load_balancing_form.html'">&#43; Add New Record</button>
+      <button class="btn-outline" onclick="print()">&#128438; Print List</button>
+      <button class="btn-secondary" onclick="window.location.href='index.html'">&#8592; Back to Home</button>
+      <span class="record-count" id="record-count"></span>
+    </div>
+    <div class="filter-bar" id="filter-bar">
+      <div class="filter-group">
+        <label>From:</label>
+        <input type="date" id="filter-from">
+      </div>
+      <div class="filter-group">
+        <label>To:</label>
+        <input type="date" id="filter-to">
+      </div>
+      <div class="filter-group">
+        <label>Quick:</label>
+        <select id="filter-quick">
+          <option value="all">All Records</option>
+          <option value="this-week">This Week</option>
+          <option value="last-week">Last Week</option>
+          <option value="this-month">This Month</option>
+          <option value="last-month">Last Month</option>
+          <option value="last-3-months">Last 3 Months</option>
+          <option value="last-6-months">Last 6 Months</option>
+          <option value="this-year">This Year</option>
+        </select>
+      </div>
+      <button class="btn-primary btn-filter" onclick="applyFilter()">Filter</button>
+      <button class="btn-clear" onclick="clearFilter()">Clear</button>
+      <span id="filter-info" style="font-size:12px;color:#64748b;margin-left:auto"></span>
     </div>
     <div class="card">
-      <div id="table-container"></div>
-      <div id="empty" class="empty" style="display:none">No printable records found. Add a new one from the form page.</div>
+      <div class="table-wrapper" id="table-container"></div>
+      <div id="empty" class="empty-state" style="display:none">
+        <div class="icon">&#128203;</div>
+        <p>No saved records found</p>
+        <div class="hint">Click "Add New Record" to create your first load balancing report.</div>
+      </div>
     </div>
   </div>
   <script>
     const LB_KEY = 'epm_load_balancing_v1';
+    let isAdminUser = false;
+
+    // Check admin status via Firebase custom claims
+    function checkAdminStatus() {
+      const firebaseUser = firebase.auth().currentUser;
+      if (firebaseUser) {
+        firebaseUser.getIdTokenResult(true).then(idTokenResult => {
+          isAdminUser = idTokenResult.claims.admin === true;
+          console.log('Admin status:', isAdminUser);
+          renderTable();
+        }).catch(err => {
+          console.error('Error checking admin status:', err);
+          isAdminUser = false;
+          renderTable();
+        });
+      } else {
+        setTimeout(checkAdminStatus, 500);
+      }
+    }
+    setTimeout(checkAdminStatus, 2000);
+
     async function loadLBRecords(){
       return await FirestoreDB.loadRecords(LB_KEY);
     }
@@ -62,370 +164,470 @@
       div.textContent = str;
       return div.innerHTML;
     }
-    async function renderTable(){
-      const records = await loadLBRecords();
+
+    // Build signatories HTML block for view/print windows
+    function buildSignatoriesHtml(rec, escapeHtml){
+      let s = '';
+      s += '<div style="margin-top:24px;border-top:2px solid #333;padding-top:16px">';
+      s += '<div style="font-size:13px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Signatories</div>';
+      s += '<div style="display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap">';
+      s += '<div style="flex:1;min-width:160px">';
+      s += '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Conducted By</div>';
+      s += '<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">'+escapeHtml(rec.conductedBy||'')+'</div>';
+      s += '<div style="font-size:10px;color:#777;margin-top:2px">Electrician / Technician</div>';
+      s += '</div>';
+      s += '<div style="flex:1;min-width:160px">';
+      s += '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Witnessed &amp; Verified By</div>';
+      s += '<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">'+escapeHtml(rec.witnessBy||'')+'</div>';
+      s += '<div style="font-size:10px;color:#777;margin-top:2px">Mall Administration Representative</div>';
+      s += '</div>';
+      s += '<div style="flex:1;min-width:160px">';
+      s += '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Certified By</div>';
+      s += '<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">'+escapeHtml(rec.certifiedBy||'')+'</div>';
+      s += '<div style="font-size:10px;color:#777;margin-top:2px">Licensed Professional</div>';
+      s += '</div>';
+      s += '<div style="flex:1;min-width:160px">';
+      s += '<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Witnessed By</div>';
+      s += '<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">'+escapeHtml(rec.witnessTenant||'')+'</div>';
+      s += '<div style="font-size:10px;color:#777;margin-top:2px">Tenant Representative</div>';
+      s += '</div>';
+      s += '</div>';
+      s += '<div style="margin-top:12px;text-align:right;font-size:11px;color:#555">Date: '+escapeHtml(rec.date||'')+' | Time: '+escapeHtml(rec.time||'')+'</div>';
+      s += '</div>';
+      return s;
+    }
+
+    let allRecords = [];
+
+    function parseRecordDate(rec){
+      if(rec.savedAt) return new Date(rec.savedAt);
+      if(rec.date){
+        const d = new Date(rec.date);
+        if(!isNaN(d.getTime())) return d;
+        // Try parsing MM/DD/YYYY or DD/MM/YYYY
+        const parts = rec.date.split(/[\/\-]/);
+        if(parts.length === 3){
+          const attempt = new Date(parts[2], parts[0]-1, parts[1]);
+          if(!isNaN(attempt.getTime())) return attempt;
+        }
+      }
+      return null;
+    }
+
+    function getFilteredRecords(){
+      const fromVal = document.getElementById('filter-from').value;
+      const toVal = document.getElementById('filter-to').value;
+      const quick = document.getElementById('filter-quick').value;
+      const infoEl = document.getElementById('filter-info');
+      let fromDate = null, toDate = null;
+
+      if(quick !== 'all'){
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const dayOfWeek = today.getDay();
+        const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        if(quick === 'this-week'){
+          fromDate = new Date(today); fromDate.setDate(today.getDate() - mondayOffset);
+          toDate = new Date(today); toDate.setDate(fromDate.getDate() + 6);
+        } else if(quick === 'last-week'){
+          fromDate = new Date(today); fromDate.setDate(today.getDate() - mondayOffset - 7);
+          toDate = new Date(fromDate); toDate.setDate(fromDate.getDate() + 6);
+        } else if(quick === 'this-month'){
+          fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          toDate = new Date(now.getFullYear(), now.getMonth()+1, 0);
+        } else if(quick === 'last-month'){
+          fromDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+          toDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        } else if(quick === 'last-3-months'){
+          fromDate = new Date(now.getFullYear(), now.getMonth()-3, 1);
+          toDate = today;
+        } else if(quick === 'last-6-months'){
+          fromDate = new Date(now.getFullYear(), now.getMonth()-6, 1);
+          toDate = today;
+        } else if(quick === 'this-year'){
+          fromDate = new Date(now.getFullYear(), 0, 1);
+          toDate = new Date(now.getFullYear(), 11, 31);
+        }
+      } else {
+        if(fromVal) fromDate = new Date(fromVal + 'T00:00:00');
+        if(toVal) toDate = new Date(toVal + 'T23:59:59');
+      }
+
+      if(!fromDate && !toDate){
+        if(infoEl) infoEl.textContent = '';
+        return {filtered: allRecords, indices: allRecords.map((_,i)=>i)};
+      }
+
+      const filtered = []; const indices = [];
+      allRecords.forEach((rec,i)=>{
+        const d = parseRecordDate(rec);
+        if(!d){ filtered.push(rec); indices.push(i); return; }
+        if(fromDate && d < fromDate) return;
+        if(toDate && d > toDate) return;
+        filtered.push(rec); indices.push(i);
+      });
+      const fmtFrom = fromDate ? fromDate.toLocaleDateString() : '...';
+      const fmtTo = toDate ? toDate.toLocaleDateString() : '...';
+      if(infoEl) infoEl.textContent = 'Showing ' + filtered.length + ' of ' + allRecords.length + ' (' + fmtFrom + ' — ' + fmtTo + ')';
+      return {filtered, indices};
+    }
+
+    function applyFilter(){ renderFilteredTable(); }
+    function clearFilter(){
+      document.getElementById('filter-from').value = '';
+      document.getElementById('filter-to').value = '';
+      document.getElementById('filter-quick').value = 'all';
+      document.getElementById('filter-info').textContent = '';
+      renderFilteredTable();
+    }
+    // When quick filter changes, clear manual date inputs
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.getElementById('filter-quick').addEventListener('change', function(){
+        if(this.value !== 'all'){
+          document.getElementById('filter-from').value = '';
+          document.getElementById('filter-to').value = '';
+        }
+      });
+      document.getElementById('filter-from').addEventListener('change', ()=>{ document.getElementById('filter-quick').value = 'all'; });
+      document.getElementById('filter-to').addEventListener('change', ()=>{ document.getElementById('filter-quick').value = 'all'; });
+    });
+
+    function renderFilteredTable(){
+      const {filtered, indices} = getFilteredRecords();
       const container = document.getElementById('table-container');
       const emptyEl = document.getElementById('empty');
-      if(!records || records.length === 0){
+      const countEl = document.getElementById('record-count');
+      if(!filtered || filtered.length === 0){
         container.innerHTML = '';
         emptyEl.style.display = 'block';
+        if(countEl) countEl.textContent = '';
         return;
       }
       emptyEl.style.display = 'none';
-      let html = '<table><thead><tr>';
+      if(countEl) countEl.textContent = filtered.length + ' record' + (filtered.length !== 1 ? 's' : '');
+      buildTable(filtered, indices, container);
+    }
+
+    async function renderTable(){
+      const records = await loadLBRecords();
+      allRecords = records || [];
+      const container = document.getElementById('table-container');
+      const emptyEl = document.getElementById('empty');
+      const countEl = document.getElementById('record-count');
+      if(!allRecords || allRecords.length === 0){
+        container.innerHTML = '';
+        emptyEl.style.display = 'block';
+        if(countEl) countEl.textContent = '';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      renderFilteredTable();
+    }
+
+    function buildTable(records, indices, container){
+      const countEl = document.getElementById('record-count');
+      if(countEl) countEl.textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
+      let html = '<table>';
+      html += '<colgroup>';
+      html += '<col class="col-filename">';
+      html += '<col class="col-company">';
+      html += '<col class="col-branch">';
+      html += '<col class="col-location">';
+      html += '<col class="col-date">';
+      html += '<col class="col-time">';
+      html += '<col class="col-panel">';
+      html += '<col class="col-total">';
+      html += '<col class="col-remarks">';
+      html += '<col class="col-actions">';
+      html += '</colgroup>';
+      html += '<thead><tr>';
+      html += '<th>File Name</th>';
+      html += '<th>Company</th>';
+      html += '<th>Branch Code</th>';
+      html += '<th>Location</th>';
       html += '<th>Date</th>';
-      html += '<th>Branch</th>';
+      html += '<th>Time</th>';
       html += '<th>Panel</th>';
-      html += '<th>Phase A</th>';
-      html += '<th>Phase B</th>';
-      html += '<th>Phase C</th>';
-      html += '<th>Total Load</th>';
+      html += '<th>Load</th>';
       html += '<th>Remarks</th>';
       html += '<th>Actions</th>';
       html += '</tr></thead><tbody>';
-      records.forEach((rec,i)=>{
+      records.forEach((rec,idx)=>{
+        const realIdx = indices[idx];
+        const savedTime = rec.savedAt ? new Date(rec.savedAt).toLocaleString() : (rec.time || '');
         html += '<tr>';
-        html += `<td>${escapeHTML(rec.date||'')}</td>`;
-        html += `<td>${escapeHTML(rec.branch||'')}</td>`;
+        html += `<td class="cell-filename" title="${escapeHTML(rec.fileName||rec.refId||'')}">${escapeHTML(rec.fileName||rec.refId||'Untitled')}</td>`;
+        html += `<td class="cell-company">${escapeHTML(rec.company||'')}</td>`;
+        html += `<td><span class="cell-branch">${escapeHTML(rec.branch||'')}</span></td>`;
+        html += `<td>${escapeHTML(rec.location||'')}</td>`;
+        html += `<td class="cell-date">${escapeHTML(rec.date||'')}</td>`;
+        html += `<td class="cell-time">${escapeHTML(savedTime)}</td>`;
         html += `<td>${escapeHTML(rec.panel||'')}</td>`;
-        html += `<td>${escapeHTML(rec.phaseA||'')}</td>`;
-        html += `<td>${escapeHTML(rec.phaseB||'')}</td>`;
-        html += `<td>${escapeHTML(rec.phaseC||'')}</td>`;
-        html += `<td>${escapeHTML(rec.totalLoad||'')}</td>`;
-        html += `<td>${escapeHTML(rec.remarks||'')}</td>`;
-        html += `<td><button onclick="viewRecord(${i})">View</button> <button onclick="printRecord(${i})">Print</button> <button onclick="deleteRecord(${i})" style="background:#e53e3e;color:#fff;">Delete</button></td>`;
+        html += `<td class="cell-total">${escapeHTML(rec.totalLoad||'')} kW</td>`;
+        html += `<td class="cell-remarks" title="${escapeHTML(rec.remarks||'')}">${escapeHTML(rec.remarks||'')}</td>`;
+        let actionsHtml = '<div class="actions-cell">';
+        actionsHtml += `<button class="btn-edit btn-sm" onclick="editRecord(${realIdx})">Edit</button> `;
+        actionsHtml += `<button class="btn-outline btn-sm" onclick="viewRecord(${realIdx})">View</button> `;
+        actionsHtml += `<button class="btn-primary btn-sm" onclick="printRecord(${realIdx})">Print</button> `;
+        if(isAdminUser) { actionsHtml += `<button class="btn-danger btn-sm" onclick="deleteRecord(${realIdx})">Delete</button>`; }
+        actionsHtml += '</div>';
+        html += `<td>${actionsHtml}</td>`;
         html += '</tr>';
       });
       html += '</tbody></table>';
       container.innerHTML = html;
     }
+    // ── Shared professional print/view builder ──
+    function buildProfessionalDoc(rec, autoPrint){
+      function esc(s){ return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+      const circType = rec.circType || '';
+      let lineLabels;
+      if(circType === 'three_delta') lineLabels = ['L1L2','L1L3','L2L3'];
+      else if(circType === 'single_llc') lineLabels = ['L1L2','L2','L3','N'];
+      else lineLabels = ['L1','L2','L3','N'];
+      const loadsArr = Array.isArray(rec.loads) ? rec.loads.slice().reverse() : [];
+      const maxRows = Math.max(24, loadsArr.length) + 1;
+      const rows = [];
+      for(let i=0;i<maxRows;i++){
+        const load = loadsArr[i];
+        const desc = load ? (load.name||load.description||'') : '';
+        let l1='',l2='',l3='',n='';
+        if(load){
+          const ph = String(load.phase||'').toUpperCase().replace(/\s+/g,'');
+          if(circType==='three_delta'){
+            if(ph==='AB'||ph==='BA') l1=Number(load.value).toFixed(2);
+            else if(ph==='CA'||ph==='AC') l2=Number(load.value).toFixed(2);
+            else if(ph==='BC'||ph==='CB') l3=Number(load.value).toFixed(2);
+          } else {
+            if(ph.indexOf('A')!==-1||ph.indexOf('L1')!==-1) l1=Number(load.value).toFixed(2);
+            if(ph.indexOf('B')!==-1||ph.indexOf('L2')!==-1) l2=Number(load.value).toFixed(2);
+            if(ph.indexOf('C')!==-1||ph.indexOf('L3')!==-1||ph.indexOf('3')!==-1) l3=Number(load.value).toFixed(2);
+            if(ph.indexOf('N')!==-1) n=Number(load.value).toFixed(2);
+          }
+        }
+        const hasCurrent = !!(l1||l2||l3);
+        const vll = hasCurrent ? (rec.vll||'') : '';
+        const phv = hasCurrent ? (rec.vph||rec.vln||'') : '';
+        rows.push({description:desc,n,l1,l2,l3,v_l12:vll,v_l13:vll,v_l23:vll,ph_l1n:phv,ph_l2n:phv,ph_l3n:phv,remarks:''});
+      }
+      let totL1=0,totL2=0,totL3=0,totN=0;
+      rows.forEach(r=>{totL1+=parseFloat(r.l1||0);totL2+=parseFloat(r.l2||0);totL3+=parseFloat(r.l3||0);totN+=parseFloat(r.n||0)});
+      let neutralCurrentDisplay=totN.toFixed(2), neutralCurrentMagnitude=totN, totalRowRemark='';
+      if(circType==='three_wye'){
+        const d2r=Math.PI/180;
+        const Ir=totL1*Math.cos(0)+totL2*Math.cos(120*d2r)+totL3*Math.cos(-120*d2r);
+        const Ii=totL1*Math.sin(0)+totL2*Math.sin(120*d2r)+totL3*Math.sin(-120*d2r);
+        const InMag=Math.sqrt(Ir*Ir+Ii*Ii), InAng=Math.atan2(Ii,Ir)*(180/Math.PI);
+        neutralCurrentDisplay=InMag.toFixed(2)+'\u2220'+InAng.toFixed(1)+'\u00b0';
+        neutralCurrentMagnitude=InMag;
+        totalRowRemark=InMag>(totL1+totL2+totL3)/3?'Unbalanced Circuit':'Balanced';
+      } else if(circType==='three_delta'){
+        const avg=(totL1+totL2+totL3)/3, thr=avg*0.20;
+        totalRowRemark=(Math.abs(totL1-avg)>thr||Math.abs(totL2-avg)>thr||Math.abs(totL3-avg)>thr)?'Unbalanced':'Balanced';
+      }
+      // Circuit type display name
+      const circNames = {three_wye:'3-Phase Wye (Star)',three_delta:'3-Phase Delta',single_ln:'Single Phase (L-N)',single_ll:'Single Phase (L-L Split)',single_llc:'Single Phase (L-L Combined)'};
+      const circName = circNames[circType] || circType || 'N/A';
+      // Full load test data
+      const hasFullTest = rec.meas_van||rec.meas_vbn||rec.meas_vcn||rec.meas_ia||rec.meas_ib||rec.meas_ic;
+
+      let h = '';
+      h += '<!DOCTYPE html><html><head><meta charset="utf-8">';
+      h += '<title>'+esc(rec.fileName||rec.refId||'Load Balancing Report')+'</title>';
+      h += '<style>';
+      h += '@media print{@page{size:landscape;margin:10mm 12mm} .no-print{display:none!important}';
+      h += 'html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}';
+      h += 'body,td,th,span,div,p{color:#000!important}';
+      h += '.doc-border{border:3px solid #0033a0!important;-webkit-box-decoration-break:clone!important;box-decoration-break:clone!important}'
+      h += '.header-band{background:#0033a0!important;color:#fff!important}';
+      h += '.header-band h1,.header-band div,.header-band span{color:#fff!important}';
+      h += 'thead th{background:#0033a0!important;color:#fff!important;border-color:#002080!important}';
+      h += 'tbody td{border:1px solid #000!important;color:#000!important}';
+      h += 'tbody tr:nth-child(even){background:#eef2ff!important}';
+      h += '.total-row td{background:#dbeafe!important;border-top:3px solid #0033a0!important;color:#000!important}';
+      h += '.desc-cell{color:#000!important}';
+      h += '.meta-box{border:1px solid #000!important;background:#f0f4ff!important}';
+      h += '.meta-box h3{color:#0033a0!important;border-bottom:1px solid #000!important}';
+      h += '.meta-row .lbl{color:#000!important}';
+      h += '.meta-row .val{color:#000!important}';
+      h += '.section-title{color:#0033a0!important;border-bottom:2px solid #0033a0!important}';
+      h += '.sig-label{color:#000!important}';
+      h += '.sig-line{border-bottom:2px solid #000!important;color:#000!important}';
+      h += '.sig-title{color:#000!important}';
+      h += '.footer{border-top:1px solid #000!important}';
+      h += '.footer span{color:#000!important}';
+      h += '.remark-balanced{background:#d1fae5!important;color:#065f46!important}';
+      h += '.remark-unbalanced{background:#fee2e2!important;color:#991b1b!important}';
+      h += '.ft-item{border:1px solid #000!important;background:#f0f4ff!important}';
+      h += '.ft-item .ft-label{color:#000!important}';
+      h += '.ft-item .ft-value{color:#0033a0!important}';
+      h += '}';
+      h += '*{box-sizing:border-box;margin:0;padding:0}';
+      h += 'body{font-family:"Segoe UI",Arial,Helvetica,sans-serif;color:#000;padding:20px 28px;font-size:11px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}';
+      h += '.doc-border{border:2px solid #0033a0;padding:20px 24px;-webkit-box-decoration-break:clone;box-decoration-break:clone}';
+      h += '.header-band{background:#0033a0;color:#fff;padding:14px 20px;border-radius:4px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}';
+      h += '.header-band h1{font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase}';
+      h += '.header-band .doc-id{font-size:11px;text-align:right}';
+      h += '.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin-bottom:16px}';
+      h += '.meta-box{background:#f0f4ff;border:1px solid #000;border-radius:6px;padding:10px 14px}';
+      h += '.meta-box h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#0033a0;font-weight:900;margin-bottom:6px;border-bottom:1px solid #000;padding-bottom:4px}';
+      h += '.meta-row{display:flex;justify-content:space-between;padding:2px 0;font-size:11px}';
+      h += '.meta-row .lbl{color:#000;font-weight:700}';
+      h += '.meta-row .val{color:#000;font-weight:900}';
+      h += 'table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:10.5px}';
+      h += 'thead th{background:#0033a0;color:#fff;font-weight:900;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;padding:7px 5px;text-align:center;border:1px solid #002080}';
+      h += 'tbody td{padding:5px 4px;border:1px solid #000;text-align:center;font-size:10.5px;color:#000;font-weight:500}';
+      h += 'tbody tr:nth-child(even){background:#eef2ff}';
+      h += 'tbody tr:hover{background:#eff6ff}';
+      h += '.total-row td{background:#dbeafe!important;font-weight:900;border-top:3px solid #0033a0;font-size:11px;color:#000}';
+      h += '.desc-cell{text-align:left!important;font-weight:700;color:#000}';
+      h += '.section-title{font-size:12px;font-weight:900;color:#0033a0;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #0033a0}';
+      h += '.sig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}';
+      h += '.sig-box{text-align:center;padding:8px}';
+      h += '.sig-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#000;font-weight:700;margin-bottom:24px}';
+      h += '.sig-line{border-bottom:2px solid #000;padding:6px 4px;min-height:20px;font-size:12px;font-weight:900;color:#000}';
+      h += '.sig-title{font-size:8.5px;color:#000;font-weight:600;margin-top:3px}';
+      h += '.footer{margin-top:16px;padding-top:8px;border-top:1px solid #000;display:flex;justify-content:space-between;font-size:9px;color:#000;font-weight:600}';
+      h += '.remark-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:900}';
+      h += '.remark-balanced{background:#d1fae5;color:#065f46}';
+      h += '.remark-unbalanced{background:#fee2e2;color:#991b1b}';
+      h += '.full-test-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}';
+      h += '.ft-item{background:#f0f4ff;border:1px solid #000;border-radius:4px;padding:6px 10px;text-align:center}';
+      h += '.ft-item .ft-label{font-size:8.5px;color:#000;text-transform:uppercase;font-weight:700;letter-spacing:.5px}';
+      h += '.ft-item .ft-value{font-size:13px;font-weight:900;color:#0033a0}';
+      h += '.print-btn{padding:10px 24px;font-size:13px;cursor:pointer;background:#0033a0;color:#fff;border:none;border-radius:6px;font-weight:700;margin-top:12px}';
+      h += '.print-btn:hover{background:#002080}';
+      h += '</style></head><body>';
+      h += '<div class="doc-border">';
+      // Header band
+      h += '<div class="header-band">';
+      h += '<div><h1>Load Balancing &amp; Full Load Test Report</h1>';
+      h += '<div style="font-size:10px;margin-top:2px;opacity:.85">'+esc(circName)+'</div></div>';
+      h += '<div class="doc-id"><div style="font-size:13px;font-weight:700">'+esc(rec.fileName||'Untitled')+'</div>';
+      h += '<div>Ref: '+esc(rec.refId||'')+'</div>';
+      h += '<div>Date: '+esc(rec.date||'')+(rec.time?' | '+esc(rec.time):'')+'</div></div>';
+      h += '</div>';
+      // Meta grid
+      h += '<div class="meta-grid">';
+      h += '<div class="meta-box"><h3>Company &amp; Location</h3>';
+      h += '<div class="meta-row"><span class="lbl">Company</span><span class="val">'+esc(rec.company||'')+'</span></div>';
+      h += '<div class="meta-row"><span class="lbl">Location</span><span class="val">'+esc(rec.location||'')+'</span></div>';
+      h += '<div class="meta-row"><span class="lbl">Branch Code</span><span class="val">'+esc(rec.branch||'')+'</span></div>';
+      h += '</div>';
+      h += '<div class="meta-box"><h3>Main Circuit Details</h3>';
+      h += '<div class="meta-row"><span class="lbl">Panel Board</span><span class="val">'+esc(rec.panel||'')+'</span></div>';
+      h += '<div class="meta-row"><span class="lbl">MCB Capacity</span><span class="val">'+esc(rec.mcb||'')+' A</span></div>';
+      h += '<div class="meta-row"><span class="lbl">Main Voltage</span><span class="val">'+esc(rec.mainV||'')+' V</span></div>';
+      h += '<div class="meta-row"><span class="lbl">Wire Size</span><span class="val">'+esc(rec.wires||'')+'</span></div>';
+      h += '</div></div>';
+      // Load balancing table
+      h += '<div class="section-title">Load Schedule</div>';
+      h += '<table><thead><tr>';
+      h += '<th rowspan="2" style="min-width:120px">Description</th>';
+      const lcSpan = circType==='three_delta'?'3':'4';
+      h += '<th colspan="'+lcSpan+'">Line Current (Amps)</th>';
+      h += '<th colspan="3">Line Voltage (V)</th>';
+      h += '<th colspan="3">Phase Voltage (V)</th>';
+      h += '<th rowspan="2">Remarks</th>';
+      h += '</tr><tr>';
+      if(circType==='three_delta') h += '<th>'+lineLabels[0]+'</th><th>'+lineLabels[1]+'</th><th>'+lineLabels[2]+'</th>';
+      else h += '<th>'+lineLabels[0]+'</th><th>'+lineLabels[1]+'</th><th>'+lineLabels[2]+'</th><th>'+lineLabels[3]+'</th>';
+      h += '<th>V<sub>L1L2</sub></th><th>V<sub>L1L3</sub></th><th>V<sub>L2L3</sub></th>';
+      h += '<th>L1-N</th><th>L2-N</th><th>L3-N</th>';
+      h += '</tr></thead><tbody>';
+      rows.forEach(r=>{
+        if(!(r.description||r.l1||r.l2||r.l3||r.n)) return;
+        h += '<tr>';
+        h += '<td class="desc-cell">'+esc(r.description)+'</td>';
+        h += '<td>'+(r.l1||'')+'</td><td>'+(r.l2||'')+'</td><td>'+(r.l3||'')+'</td>';
+        if(circType!=='three_delta') h += '<td>'+(r.n||'')+'</td>';
+        if(circType==='single_llc') h += '<td>'+(r.v_l12||'')+'</td><td></td><td></td>';
+        else h += '<td>'+(r.v_l12||'')+'</td><td>'+(r.v_l13||'')+'</td><td>'+(r.v_l23||'')+'</td>';
+        if(circType==='single_ln') h += '<td>'+(r.ph_l1n||'')+'</td><td></td><td></td>';
+        else if(circType==='single_ll') h += '<td>'+(r.ph_l1n||'')+'</td><td>'+(r.ph_l2n||'')+'</td><td></td>';
+        else if(circType==='three_delta') h += '<td></td><td></td><td></td>';
+        else h += '<td>'+(r.ph_l1n||'')+'</td><td>'+(r.ph_l2n||'')+'</td><td>'+(r.ph_l3n||'')+'</td>';
+        let rmk = r.remarks||'';
+        if(circType==='three_wye'&&r.description==='Neutral Current'&&r.n&&parseFloat(r.n)>neutralCurrentMagnitude) rmk='Suspected Harmonics';
+        h += '<td>'+rmk+'</td></tr>';
+      });
+      // Total row
+      const remarkClass = totalRowRemark.toLowerCase().includes('unbalanced')?'remark-unbalanced':'remark-balanced';
+      h += '<tr class="total-row">';
+      h += '<td style="text-align:right">TOTAL</td>';
+      h += '<td>'+totL1.toFixed(2)+'</td><td>'+totL2.toFixed(2)+'</td><td>'+totL3.toFixed(2)+'</td>';
+      if(circType!=='three_delta') h += '<td>'+neutralCurrentDisplay+'</td>';
+      h += '<td></td><td></td><td></td><td></td><td></td><td></td>';
+      h += '<td><span class="remark-badge '+remarkClass+'">'+(totalRowRemark||'')+'</span></td>';
+      h += '</tr></tbody></table>';
+      // Full load test section
+      if(hasFullTest){
+        h += '<div class="section-title">Full Load Test Measurements</div>';
+        h += '<div class="full-test-grid">';
+        h += '<div class="ft-item"><div class="ft-label">V<sub>AN</sub></div><div class="ft-value">'+esc(rec.meas_van||'-')+' V</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">V<sub>BN</sub></div><div class="ft-value">'+esc(rec.meas_vbn||'-')+' V</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">V<sub>CN</sub></div><div class="ft-value">'+esc(rec.meas_vcn||'-')+' V</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">I<sub>A</sub></div><div class="ft-value">'+esc(rec.meas_ia||'-')+' A</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">I<sub>B</sub></div><div class="ft-value">'+esc(rec.meas_ib||'-')+' A</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">I<sub>C</sub></div><div class="ft-value">'+esc(rec.meas_ic||'-')+' A</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">PF A</div><div class="ft-value">'+esc(rec.pf_a||'-')+'</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">PF B</div><div class="ft-value">'+esc(rec.pf_b||'-')+'</div></div>';
+        h += '<div class="ft-item"><div class="ft-label">PF C</div><div class="ft-value">'+esc(rec.pf_c||'-')+'</div></div>';
+        if(rec.nameplate) h += '<div class="ft-item" style="grid-column:span 3"><div class="ft-label">Nameplate Power</div><div class="ft-value">'+esc(rec.nameplate)+' kW</div></div>';
+        h += '</div>';
+      }
+      // Remarks
+      if(rec.remarks){
+        h += '<div class="section-title">Remarks</div>';
+        h += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:11px;color:#92400e;margin-bottom:8px">'+esc(rec.remarks)+'</div>';
+      }
+      // Signatories
+      h += '<div class="section-title">Signatories</div>';
+      h += '<div class="sig-grid">';
+      h += '<div class="sig-box"><div class="sig-label">Conducted By</div><div class="sig-line">'+esc(rec.conductedBy||'')+'</div><div class="sig-title">Electrician / Technician</div></div>';
+      h += '<div class="sig-box"><div class="sig-label">Witnessed &amp; Verified By</div><div class="sig-line">'+esc(rec.witnessBy||'')+'</div><div class="sig-title">Mall Administration Representative</div></div>';
+      h += '<div class="sig-box"><div class="sig-label">Certified By</div><div class="sig-line">'+esc(rec.certifiedBy||'')+'</div><div class="sig-title">Licensed Professional</div></div>';
+      h += '<div class="sig-box"><div class="sig-label">Witnessed By (Tenant)</div><div class="sig-line">'+esc(rec.witnessTenant||'')+'</div><div class="sig-title">Tenant Representative</div></div>';
+      h += '</div>';
+      // Footer
+      h += '<div class="footer"><span>Electrical Preventive Maintenance System</span><span>Generated: '+new Date().toLocaleString()+'</span></div>';
+      h += '</div>'; // close doc-border
+      if(autoPrint){
+        h += '<div class="no-print" style="text-align:center;margin-top:16px"><button class="print-btn" onclick="window.focus();window.print();">Print Report</button></div>';
+      }
+      h += '</body></html>';
+      return h;
+    }
+
     function viewRecord(idx){
       loadLBRecords().then(records=>{
         if(!records[idx]) return;
-        const rec = records[idx];
-        // --- Begin printable logic ported from form ---
-        function escapeHtml(s){ return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-        const circType = rec.circType || '';
-        // Table header logic
-        let lineLabels;
-        if(circType === 'three_delta'){
-          lineLabels = ['L1L2','L1L3','L2L3'];
-        } else if(circType === 'single_llc'){
-          lineLabels = ['L1L2','L2','L3','N'];
-        } else {
-          lineLabels = ['L1','L2','L3','N'];
-        }
-        // Prepare rows (rebuild from loads array)
-        const loadsArr = Array.isArray(rec.loads) ? rec.loads.slice().reverse() : [];
-        const maxRows = Math.max(24, loadsArr.length) + 1;
-        const rows = [];
-        for(let i=0;i<maxRows;i++){
-          const load = loadsArr[i];
-          const desc = load ? (load.name||load.description||'') : '';
-          let l1='', l2='', l3='', n='';
-          if(load){
-            const ph = String(load.phase||'').toUpperCase().replace(/\s+/g,'');
-            if(circType === 'three_delta'){
-              if(ph==='AB' || ph==='BA') l1 = Number(load.value).toFixed(2);
-              else if(ph==='CA' || ph==='AC') l2 = Number(load.value).toFixed(2);
-              else if(ph==='BC' || ph==='CB') l3 = Number(load.value).toFixed(2);
-            } else {
-              if(ph.indexOf('A')!==-1 || ph.indexOf('L1')!==-1) l1 = Number(load.value).toFixed(2);
-              if(ph.indexOf('B')!==-1 || ph.indexOf('L2')!==-1) l2 = Number(load.value).toFixed(2);
-              if(ph.indexOf('C')!==-1 || ph.indexOf('L3')!==-1 || ph.indexOf('3')!==-1) l3 = Number(load.value).toFixed(2);
-              if(ph.indexOf('N')!==-1) n = Number(load.value).toFixed(2);
-            }
-          }
-          const hasCurrent = !!(l1 || l2 || l3);
-          const vll = hasCurrent ? (rec.vll || '') : '';
-          const phv = hasCurrent ? (rec.vph || rec.vln || '') : '';
-          rows.push({description: desc, n: n, l1, l2, l3, v_l12: vll, v_l13: vll, v_l23: vll, ph_l1n: phv, ph_l2n: phv, ph_l3n: phv, remarks:''});
-        }
-        // Totals
-        let totL1=0, totL2=0, totL3=0; let totN=0;
-        rows.forEach(r=>{ totL1 += parseFloat(r.l1||0); totL2 += parseFloat(r.l2||0); totL3 += parseFloat(r.l3||0); totN += parseFloat(r.n||0) });
-        // Neutral current and remarks
-        let neutralCurrentDisplay = totN.toFixed(2);
-        let neutralCurrentMagnitude = totN;
-        let totalRowRemark = '';
-        if(circType === 'three_wye'){
-          const deg2rad = Math.PI / 180;
-          const L1_real = totL1 * Math.cos(0 * deg2rad);
-          const L1_imag = totL1 * Math.sin(0 * deg2rad);
-          const L2_real = totL2 * Math.cos(120 * deg2rad);
-          const L2_imag = totL2 * Math.sin(120 * deg2rad);
-          const L3_real = totL3 * Math.cos(-120 * deg2rad);
-          const L3_imag = totL3 * Math.sin(-120 * deg2rad);
-          const In_real = L1_real + L2_real + L3_real;
-          const In_imag = L1_imag + L2_imag + L3_imag;
-          const In_magnitude = Math.sqrt(In_real * In_real + In_imag * In_imag);
-          const In_angle = Math.atan2(In_imag, In_real) * (180 / Math.PI);
-          neutralCurrentDisplay = `${In_magnitude.toFixed(2)}∠${In_angle.toFixed(1)}°`;
-          neutralCurrentMagnitude = In_magnitude;
-          const avgPhaseCurrent = (totL1 + totL2 + totL3) / 3;
-          if(In_magnitude > avgPhaseCurrent){ totalRowRemark = 'Unbalanced Circuit'; } else { totalRowRemark = 'Balanced'; }
-        } else if(circType === 'three_delta'){
-          const avgLineCurrent = (totL1 + totL2 + totL3) / 3;
-          const threshold = avgLineCurrent * 0.20;
-          const deviationL1 = Math.abs(totL1 - avgLineCurrent);
-          const deviationL2 = Math.abs(totL2 - avgLineCurrent);
-          const deviationL3 = Math.abs(totL3 - avgLineCurrent);
-          if(deviationL1 > threshold || deviationL2 > threshold || deviationL3 > threshold){ totalRowRemark = 'Unbalanced'; } else { totalRowRemark = 'Balanced'; }
-        }
-        // --- End printable logic ported from form ---
-        let win = window.open('', '', 'width=1200,height=700');
-        win.document.write('<html><head><title>Load Balancing Record</title>');
-        win.document.write('<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px;}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px}th{background:#eee;text-align:center}td.center{text-align:center} .small{font-size:11px}</style>');
-        win.document.write('</head><body>');
-        win.document.write('<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><strong>'+escapeHtml(rec.company||'')+'</strong><br><span class="small">'+escapeHtml(rec.location||'')+'</span><br><span class="small"><strong>MAIN CIRCUIT DETAILS</strong></span><br><span class="small">Panel: '+escapeHtml(rec.panel||'')+'</span><br><span class="small">Branch: '+escapeHtml(rec.branch||'')+'</span><br><span class="small">MCB: '+escapeHtml(rec.mcb||'')+' A</span><br><span class="small">Main V: '+escapeHtml(rec.mainV||'')+' V</span><br><span class="small">Wires: '+escapeHtml(rec.wires||'')+'</span></div><div><strong>LOAD BALANCING</strong><br>Date: '+escapeHtml(rec.date||'')+'<br>Ref: '+escapeHtml(rec.refId||'')+'</div></div>');
-        // Table header
-        win.document.write('<table>');
-        win.document.write('<thead><tr>');
-        win.document.write('<th rowspan="2">DESCRIPTION</th>');
-        const lineCurrentColspan = (circType === 'three_delta') ? '3' : '4';
-        win.document.write(`<th colspan="${lineCurrentColspan}">LINE CURRENT (AMPS)</th>`);
-        win.document.write('<th colspan="3">LINE VOLTAGE (VOLTS)</th>');
-        win.document.write('<th colspan="3">PHASE VOLTAGE (VOLTS)</th>');
-        win.document.write('<th rowspan="2">REMARKS</th>');
-        win.document.write('</tr>');
-        win.document.write('<tr>');
-        if(circType === 'three_delta'){
-          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th>`);
-        } else {
-          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th><th>${lineLabels[3]}</th>`);
-        }
-        win.document.write('<th>V_L1L2</th><th>V_L1L3</th><th>V_L2L3</th>');
-        win.document.write('<th>L1-N</th><th>L2-N</th><th>L3-N</th>');
-        win.document.write('</tr>');
-        win.document.write('</thead>');
-        win.document.write('<tbody>');
-        // Table rows
-        rows.forEach((r, idx)=>{
-          const hasData = r.description || r.l1 || r.l2 || r.l3 || r.n || r.v_l12 || r.v_l13 || r.v_l23 || r.ph_l1n || r.ph_l2n || r.ph_l3n || r.remarks;
-          if(!hasData) return;
-          win.document.write('<tr>');
-          win.document.write(`<td>${escapeHtml(r.description)}</td>`);
-          win.document.write(`<td class="center">${r.l1||''}</td>`);
-          win.document.write(`<td class="center">${r.l2||''}</td>`);
-          win.document.write(`<td class="center">${r.l3||''}</td>`);
-          if(circType !== 'three_delta'){
-            win.document.write(`<td class="center">${r.n||''}</td>`);
-          }
-          if(circType === 'single_llc'){
-            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else {
-            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
-            win.document.write(`<td class="center">${r.v_l13||''}</td>`);
-            win.document.write(`<td class="center">${r.v_l23||''}</td>`);
-          }
-          if(circType === 'single_ln'){
-            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else if(circType === 'single_ll'){
-            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
-            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else if(circType === 'three_delta'){
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else {
-            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
-            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
-            win.document.write(`<td class="center">${r.ph_l3n||''}</td>`);
-          }
-          // Remarks
-          let rowRemark = r.remarks || '';
-          if(circType === 'three_wye' && r.description === 'Neutral Current' && r.n){
-            const measuredNeutral = parseFloat(r.n);
-            if(measuredNeutral > neutralCurrentMagnitude){ rowRemark = 'Suspected Harmonics'; }
-          }
-          win.document.write(`<td class="center">${rowRemark}</td>`);
-          win.document.write('</tr>');
-        });
-        // Totals row
-        win.document.write('<tr>');
-        win.document.write('<td style="text-align:right"><strong>Total</strong></td>');
-        win.document.write(`<td class="center"><strong>${totL1.toFixed(2)}</strong></td>`);
-        win.document.write(`<td class="center"><strong>${totL2.toFixed(2)}</strong></td>`);
-        win.document.write(`<td class="center"><strong>${totL3.toFixed(2)}</strong></td>`);
-        if(circType !== 'three_delta'){
-          win.document.write(`<td class="center"><strong>${neutralCurrentDisplay}</strong></td>`);
-        }
-        win.document.write('<td></td><td></td><td></td><td></td><td></td><td></td>');
-        win.document.write(`<td class="center"><strong>${totalRowRemark}</strong></td>`);
-        win.document.write('</tr>');
-        win.document.write('</tbody></table>');
-        win.document.write('<div style="margin-top:8px;font-size:12px">Generated by Load Balancer Tool</div>');
-        win.document.write('<div style="display:flex;justify-content:space-between;margin-top:24px;font-size:15px"><div><strong>Load Balancing Conducted by:</strong><br>'+escapeHtml(rec.conductedBy||'')+'</div><div><strong>Witnessed and Verified by:</strong><br>'+escapeHtml(rec.witnessBy||'')+'</div><div><strong>Date / Time:</strong><br>'+escapeHtml(rec.date||'')+', '+escapeHtml(rec.time||'')+'</div></div>');
-        win.document.write('</body></html>');
+        const win = window.open('','','width=1200,height=800,scrollbars=yes');
+        win.document.write(buildProfessionalDoc(records[idx], false));
         win.document.close();
       });
     }
     function printRecord(idx){
       loadLBRecords().then(records=>{
         if(!records[idx]) return;
-        const rec = records[idx];
-        function escapeHtml(s){ return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-        const circType = rec.circType || '';
-        let lineLabels;
-        if(circType === 'three_delta'){
-          lineLabels = ['L1L2','L1L3','L2L3'];
-        } else if(circType === 'single_llc'){
-          lineLabels = ['L1L2','L2','L3','N'];
-        } else {
-          lineLabels = ['L1','L2','L3','N'];
-        }
-        const loadsArr = Array.isArray(rec.loads) ? rec.loads.slice().reverse() : [];
-        const maxRows = Math.max(24, loadsArr.length) + 1;
-        const rows = [];
-        for(let i=0;i<maxRows;i++){
-          const load = loadsArr[i];
-          const desc = load ? (load.name||load.description||'') : '';
-          let l1='', l2='', l3='', n='';
-          if(load){
-            const ph = String(load.phase||'').toUpperCase().replace(/\s+/g,'');
-            if(circType === 'three_delta'){
-              if(ph==='AB' || ph==='BA') l1 = Number(load.value).toFixed(2);
-              else if(ph==='CA' || ph==='AC') l2 = Number(load.value).toFixed(2);
-              else if(ph==='BC' || ph==='CB') l3 = Number(load.value).toFixed(2);
-            } else {
-              if(ph.indexOf('A')!==-1 || ph.indexOf('L1')!==-1) l1 = Number(load.value).toFixed(2);
-              if(ph.indexOf('B')!==-1 || ph.indexOf('L2')!==-1) l2 = Number(load.value).toFixed(2);
-              if(ph.indexOf('C')!==-1 || ph.indexOf('L3')!==-1 || ph.indexOf('3')!==-1) l3 = Number(load.value).toFixed(2);
-              if(ph.indexOf('N')!==-1) n = Number(load.value).toFixed(2);
-            }
-          }
-          const hasCurrent = !!(l1 || l2 || l3);
-          const vll = hasCurrent ? (rec.vll || '') : '';
-          const phv = hasCurrent ? (rec.vph || rec.vln || '') : '';
-          rows.push({description: desc, n: n, l1, l2, l3, v_l12: vll, v_l13: vll, v_l23: vll, ph_l1n: phv, ph_l2n: phv, ph_l3n: phv, remarks:''});
-        }
-        let totL1=0, totL2=0, totL3=0; let totN=0;
-        rows.forEach(r=>{ totL1 += parseFloat(r.l1||0); totL2 += parseFloat(r.l2||0); totL3 += parseFloat(r.l3||0); totN += parseFloat(r.n||0) });
-        let neutralCurrentDisplay = totN.toFixed(2);
-        let neutralCurrentMagnitude = totN;
-        let totalRowRemark = '';
-        if(circType === 'three_wye'){
-          const deg2rad = Math.PI / 180;
-          const L1_real = totL1 * Math.cos(0 * deg2rad);
-          const L1_imag = totL1 * Math.sin(0 * deg2rad);
-          const L2_real = totL2 * Math.cos(120 * deg2rad);
-          const L2_imag = totL2 * Math.sin(120 * deg2rad);
-          const L3_real = totL3 * Math.cos(-120 * deg2rad);
-          const L3_imag = totL3 * Math.sin(-120 * deg2rad);
-          const In_real = L1_real + L2_real + L3_real;
-          const In_imag = L1_imag + L2_imag + L3_imag;
-          const In_magnitude = Math.sqrt(In_real * In_real + In_imag * In_imag);
-          const In_angle = Math.atan2(In_imag, In_real) * (180 / Math.PI);
-          neutralCurrentDisplay = `${In_magnitude.toFixed(2)}∠${In_angle.toFixed(1)}°`;
-          neutralCurrentMagnitude = In_magnitude;
-          const avgPhaseCurrent = (totL1 + totL2 + totL3) / 3;
-          if(In_magnitude > avgPhaseCurrent){ totalRowRemark = 'Unbalanced Circuit'; } else { totalRowRemark = 'Balanced'; }
-        } else if(circType === 'three_delta'){
-          const avgLineCurrent = (totL1 + totL2 + totL3) / 3;
-          const threshold = avgLineCurrent * 0.20;
-          const deviationL1 = Math.abs(totL1 - avgLineCurrent);
-          const deviationL2 = Math.abs(totL2 - avgLineCurrent);
-          const deviationL3 = Math.abs(totL3 - avgLineCurrent);
-          if(deviationL1 > threshold || deviationL2 > threshold || deviationL3 > threshold){ totalRowRemark = 'Unbalanced'; } else { totalRowRemark = 'Balanced'; }
-        }
-        let win = window.open('', '', 'width=1200,height=700');
-        win.document.write('<html><head><title>Load Balancing Record</title>');
-        win.document.write('<style>@media print{@page{size:landscape;}} body{font-family:Arial,Helvetica,sans-serif;padding:12px;}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px}th{background:#eee;text-align:center}td.center{text-align:center} .small{font-size:11px}</style>');
-        win.document.write('</head><body>');
-        win.document.write('<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><strong>'+escapeHtml(rec.company||'')+'</strong><br><span class="small">'+escapeHtml(rec.location||'')+'</span><br><span class="small"><strong>MAIN CIRCUIT DETAILS</strong></span><br><span class="small">Panel: '+escapeHtml(rec.panel||'')+'</span><br><span class="small">Branch: '+escapeHtml(rec.branch||'')+'</span><br><span class="small">MCB: '+escapeHtml(rec.mcb||'')+' A</span><br><span class="small">Main V: '+escapeHtml(rec.mainV||'')+' V</span><br><span class="small">Wires: '+escapeHtml(rec.wires||'')+'</span></div><div><strong>LOAD BALANCING</strong><br>Date: '+escapeHtml(rec.date||'')+'<br>Ref: '+escapeHtml(rec.refId||'')+'</div></div>');
-        // Table header
-        win.document.write('<table>');
-        win.document.write('<thead><tr>');
-        win.document.write('<th rowspan="2">DESCRIPTION</th>');
-        const lineCurrentColspan = (circType === 'three_delta') ? '3' : '4';
-        win.document.write(`<th colspan="${lineCurrentColspan}">LINE CURRENT (AMPS)</th>`);
-        win.document.write('<th colspan="3">LINE VOLTAGE (VOLTS)</th>');
-        win.document.write('<th colspan="3">PHASE VOLTAGE (VOLTS)</th>');
-        win.document.write('<th rowspan="2">REMARKS</th>');
-        win.document.write('</tr>');
-        win.document.write('<tr>');
-        if(circType === 'three_delta'){
-          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th>`);
-        } else {
-          win.document.write(`<th>${lineLabels[0]}</th><th>${lineLabels[1]}</th><th>${lineLabels[2]}</th><th>${lineLabels[3]}</th>`);
-        }
-        win.document.write('<th>V_L1L2</th><th>V_L1L3</th><th>V_L2L3</th>');
-        win.document.write('<th>L1-N</th><th>L2-N</th><th>L3-N</th>');
-        win.document.write('</tr>');
-        win.document.write('</thead>');
-        win.document.write('<tbody>');
-        // Table rows
-        rows.forEach((r, idx)=>{
-          const hasData = r.description || r.l1 || r.l2 || r.l3 || r.n || r.v_l12 || r.v_l13 || r.v_l23 || r.ph_l1n || r.ph_l2n || r.ph_l3n || r.remarks;
-          if(!hasData) return;
-          win.document.write('<tr>');
-          win.document.write(`<td>${escapeHtml(r.description)}</td>`);
-          win.document.write(`<td class="center">${r.l1||''}</td>`);
-          win.document.write(`<td class="center">${r.l2||''}</td>`);
-          win.document.write(`<td class="center">${r.l3||''}</td>`);
-          if(circType !== 'three_delta'){
-            win.document.write(`<td class="center">${r.n||''}</td>`);
-          }
-          if(circType === 'single_llc'){
-            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else {
-            win.document.write(`<td class="center">${r.v_l12||''}</td>`);
-            win.document.write(`<td class="center">${r.v_l13||''}</td>`);
-            win.document.write(`<td class="center">${r.v_l23||''}</td>`);
-          }
-          if(circType === 'single_ln'){
-            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else if(circType === 'single_ll'){
-            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
-            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else if(circType === 'three_delta'){
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-            win.document.write(`<td class="center"></td>`);
-          } else {
-            win.document.write(`<td class="center">${r.ph_l1n||''}</td>`);
-            win.document.write(`<td class="center">${r.ph_l2n||''}</td>`);
-            win.document.write(`<td class="center">${r.ph_l3n||''}</td>`);
-          }
-          // Remarks
-          let rowRemark = r.remarks || '';
-          if(circType === 'three_wye' && r.description === 'Neutral Current' && r.n){
-            const measuredNeutral = parseFloat(r.n);
-            if(measuredNeutral > neutralCurrentMagnitude){ rowRemark = 'Suspected Harmonics'; }
-          }
-          win.document.write(`<td class="center">${rowRemark}</td>`);
-          win.document.write('</tr>');
-        });
-        // Totals row
-        win.document.write('<tr>');
-        win.document.write('<td style="text-align:right"><strong>Total</strong></td>');
-        win.document.write(`<td class="center"><strong>${totL1.toFixed(2)}</strong></td>`);
-        win.document.write(`<td class="center"><strong>${totL2.toFixed(2)}</strong></td>`);
-        win.document.write(`<td class="center"><strong>${totL3.toFixed(2)}</strong></td>`);
-        if(circType !== 'three_delta'){
-          win.document.write(`<td class="center"><strong>${neutralCurrentDisplay}</strong></td>`);
-        }
-        win.document.write('<td></td><td></td><td></td><td></td><td></td><td></td>');
-        win.document.write(`<td class="center"><strong>${totalRowRemark}</strong></td>`);
-        win.document.write('</tr>');
-        win.document.write('</tbody></table>');
-        win.document.write('<div style="margin-top:8px;font-size:12px">Generated by Load Balancer Tool</div>');
-        win.document.write('<div style="display:flex;justify-content:space-between;margin-top:24px;font-size:15px"><div><strong>Load Balancing Conducted by:</strong><br>'+escapeHtml(rec.conductedBy||'')+'</div><div><strong>Witnessed and Verified by:</strong><br>'+escapeHtml(rec.witnessBy||'')+'</div><div><strong>Date / Time:</strong><br>'+escapeHtml(rec.date||'')+', '+escapeHtml(rec.time||'')+'</div></div>');
-        win.document.write('</body></html>');
+        const win = window.open('','','width=1200,height=800,scrollbars=yes');
+        win.document.write(buildProfessionalDoc(records[idx], true));
         win.document.close();
       });
     }
+    async function editRecord(idx){
+      const records = await loadLBRecords();
+      if(!records || !records[idx]) return;
+      // Store the record and index in sessionStorage for the form to pick up
+      sessionStorage.setItem('lb_edit_record', JSON.stringify(records[idx]));
+      sessionStorage.setItem('lb_edit_index', String(idx));
+      window.location.href = 'load_balancing_form.html?edit=' + idx;
+    }
     async function deleteRecord(idx){
+      if(!isAdminUser){
+        alert('Only Admin users can delete records.');
+        return;
+      }
       if(!confirm('Are you sure you want to delete this record?')) return;
       let records = await loadLBRecords();
       if(idx < 0 || idx >= records.length) return;
