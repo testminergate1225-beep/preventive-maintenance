@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>PM Checklist - Saved Records</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+    .page-header{background:linear-gradient(135deg,#0b3d91 0%,#0b78d1 100%);color:#fff;padding:24px 32px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .page-header h1{font-size:22px;font-weight:700;letter-spacing:.3px;margin-bottom:4px}
+    .page-header .subtitle{font-size:13px;opacity:.85}
+    .container{max-width:100%;margin:0 auto;padding:20px 24px}
+    .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+    .toolbar .record-count{margin-left:auto;font-size:13px;color:#64748b;font-weight:500}
+    button{border:0;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+    button:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+    .btn-primary{background:#0b78d1!important;color:#fff!important;border:none!important}
+    .btn-primary:hover{background:#0960a8!important}
+    .btn-secondary{background:#e2e8f0!important;color:#334155!important;border:none!important}
+    .btn-secondary:hover{background:#cbd5e1!important}
+    .btn-success{background:#16a34a!important;color:#fff!important}
+    .btn-success:hover{background:#15803d!important}
+    .btn-danger{background:#ef4444!important;color:#fff!important;border:none!important}
+    .btn-danger:hover{background:#dc2626!important}
+    .btn-edit{background:#f59e0b!important;color:#fff!important;border:none!important}
+    .btn-edit:hover{background:#d97706!important}
+    .btn-outline{background:transparent!important;border:1.5px solid #0b78d1!important;color:#0b78d1!important}
+    .btn-outline:hover{background:#0b78d1!important;color:#fff!important}
+    .btn-sm{padding:5px 10px;font-size:11px;border-radius:4px;justify-content:center;text-align:center;min-width:48px}
+    .card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+    .table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+    colgroup col.col-date{width:9%}
+    colgroup col.col-branch{width:10%}
+    colgroup col.col-code{width:7%}
+    colgroup col.col-location{width:10%}
+    colgroup col.col-conducted{width:10%}
+    colgroup col.col-filename{width:12%}
+    colgroup col.col-ref{width:12%}
+    colgroup col.col-reco{width:12%}
+    colgroup col.col-actions{width:18%}
+    thead th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;padding:10px 6px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:normal;word-wrap:break-word}
+    tbody td{padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:#334155;font-weight:500;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+    tbody tr:hover{background:#f8fafc}
+    .cell-ref{font-weight:700;color:#0b3d91}
+    .cell-branch{font-weight:700}
+    .cell-date{font-size:11px}
+    .cell-reco{font-size:11px;color:#92400e}
+    .empty-state{text-align:center;padding:48px 20px;color:#64748b}
+    .empty-state h3{font-size:18px;margin-bottom:8px;color:#334155}
+    .empty-state p{font-size:14px}
+    .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .filter-bar label{font-size:12px;font-weight:600;color:#475569;white-space:nowrap}
+    .filter-bar input[type=date],.filter-bar select{padding:6px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:12px;color:#334155;background:#f8fafc}
+    .filter-bar .filter-group{display:flex;align-items:center;gap:6px}
+    .filter-bar .btn-filter{padding:6px 14px;font-size:12px;border-radius:6px}
+    .filter-bar .btn-clear{padding:6px 14px;font-size:12px;border-radius:6px;background:#f1f5f9!important;color:#64748b!important;border:1px solid #e2e8f0!important}
+    .toast{position:fixed;right:18px;bottom:18px;background:rgba(17,24,39,.95);color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 6px 18px rgba(3,10,22,.2);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;z-index:1200;font-size:13px}
+    .toast.show{opacity:1;transform:none}
+    .toast.error{background:#ef4444}
+    .toast.success{background:#16a34a}
+    @media(max-width:768px){
+      .container{padding:12px}
+      table{font-size:11px;min-width:900px}
+      .page-header{padding:14px 16px}
+      .page-header h1{font-size:18px}
+    }
+    @media print{.toolbar,.page-header,.filter-bar,button,.toast{display:none!important}}
+  </style>
+  <link rel="stylesheet" href="hangar-theme.css">
+  <link rel="stylesheet" href="responsive.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+<div class="page-header">
+  <h1>Preventive Maintenance Checklist - Saved Records</h1>
+  <p class="subtitle">View, edit, and manage saved PM checklist entries</p>
+</div>
+
+<div class="container">
+  <div id="toast" class="toast"></div>
+
+  <div class="toolbar">
+    <button class="btn-secondary" onclick="window.location.href='index.html'">← Home</button>
+    <button class="btn-success" onclick="window.location.href='pm_checklist.html'">+ Add New Checklist</button>
+    <span class="record-count" id="record-count"></span>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>From:</label>
+      <input type="date" id="filter-from"/>
+    </div>
+    <div class="filter-group">
+      <label>To:</label>
+      <input type="date" id="filter-to"/>
+    </div>
+    <div class="filter-group">
+      <label>Quick:</label>
+      <select id="filter-quick">
+        <option value="all">All Records</option>
+        <option value="this_week">This Week</option>
+        <option value="last_week">Last Week</option>
+        <option value="this_month">This Month</option>
+        <option value="last_month">Last Month</option>
+        <option value="last_3_months">Last 3 Months</option>
+        <option value="last_6_months">Last 6 Months</option>
+        <option value="this_year">This Year</option>
+      </select>
+    </div>
+    <button class="btn-primary btn-filter" onclick="applyFilter()">Filter</button>
+    <button class="btn-clear" onclick="clearFilter()">Clear</button>
+    <span id="filter-info" style="font-size:11px;color:#64748b;margin-left:8px"></span>
+  </div>
+
+  <div class="card">
+    <div class="table-wrapper">
+      <table>
+        <colgroup>
+          <col class="col-date"/>
+          <col class="col-branch"/>
+          <col class="col-code"/>
+          <col class="col-location"/>
+          <col class="col-conducted"/>
+          <col class="col-ref"/>
+          <col class="col-reco"/>
+          <col class="col-actions"/>
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Code</th>
+            <th>Location</th>
+            <th>Conducted By</th>
+            <th>Reference No.</th>
+            <th>Recommendations</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="records-body">
+          <tr><td colspan="8" class="empty-state"><h3>Loading...</h3></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLLECTION = 'epm_pm_checklist_v1';
+let allRecords = [];
+let isAdminUser = false;
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>\"\']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
+function showToast(msg, type='info', ms=2400){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.className='toast '+type;
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// ── Admin Check ──
+async function checkAdminStatus(){
+  try{
+    const user=firebase.auth().currentUser;
+    if(!user) return;
+    const token=await user.getIdTokenResult(true);
+    isAdminUser=token.claims.admin===true;
+  }catch(e){isAdminUser=false;}
+  renderFilteredTable();
+}
+
+// ── Load Records ──
+async function loadRecords(){
+  try{
+    await initFirebase();
+    allRecords=await FirestoreDB.loadRecords(COLLECTION);
+    renderFilteredTable();
+    checkAdminStatus();
+  }catch(e){
+    console.error('Load error:',e);
+    document.getElementById('records-body').innerHTML='<tr><td colspan="8" class="empty-state"><h3>Error loading records</h3><p>'+escapeHtml(e.message)+'</p></td></tr>';
+  }
+}
+
+// ── Date Filtering ──
+function parseRecordDate(rec){
+  if(!rec.date) return null;
+  const d=new Date(rec.date);
+  return isNaN(d.getTime())?null:d;
+}
+function getFilteredRecords(){
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  let filtered=allRecords;
+  if(from){
+    const fd=new Date(from);
+    filtered=filtered.filter(r=>{const d=parseRecordDate(r);return d&&d>=fd;});
+  }
+  if(to){
+    const td=new Date(to);td.setHours(23,59,59,999);
+    filtered=filtered.filter(r=>{const d=parseRecordDate(r);return d&&d<=td;});
+  }
+  return filtered;
+}
+function applyFilter(){
+  const q=document.getElementById('filter-quick').value;
+  const now=new Date();
+  let from='',to='';
+  if(q==='this_week'){const d=new Date(now);d.setDate(d.getDate()-d.getDay());from=d.toISOString().split('T')[0];}
+  else if(q==='last_week'){const d=new Date(now);d.setDate(d.getDate()-d.getDay()-7);from=d.toISOString().split('T')[0];const e=new Date(d);e.setDate(e.getDate()+6);to=e.toISOString().split('T')[0];}
+  else if(q==='this_month'){from=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';}
+  else if(q==='last_month'){const m=now.getMonth()===0?11:now.getMonth()-1;const y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();from=y+'-'+String(m+1).padStart(2,'0')+'-01';const last=new Date(y,m+1,0);to=last.toISOString().split('T')[0];}
+  else if(q==='last_3_months'){const d=new Date(now);d.setMonth(d.getMonth()-3);from=d.toISOString().split('T')[0];}
+  else if(q==='last_6_months'){const d=new Date(now);d.setMonth(d.getMonth()-6);from=d.toISOString().split('T')[0];}
+  else if(q==='this_year'){from=now.getFullYear()+'-01-01';}
+  if(from) document.getElementById('filter-from').value=from;
+  if(to) document.getElementById('filter-to').value=to;
+  renderFilteredTable();
+}
+function clearFilter(){
+  document.getElementById('filter-from').value='';
+  document.getElementById('filter-to').value='';
+  document.getElementById('filter-quick').value='all';
+  document.getElementById('filter-info').textContent='';
+  renderFilteredTable();
+}
+
+// ── Render Table ──
+function renderFilteredTable(){
+  const filtered=getFilteredRecords();
+  const tbody=document.getElementById('records-body');
+  const countEl=document.getElementById('record-count');
+  countEl.textContent=filtered.length+' record'+(filtered.length!==1?'s':'')+' found';
+
+  if(filtered.length===0){
+    tbody.innerHTML='<tr><td colspan="8" class="empty-state"><h3>No Records Found</h3><p>Click "Add New Checklist" to create one.</p></td></tr>';
+    return;
+  }
+
+  // Map filtered back to real indices
+  const indexMap=[];
+  filtered.forEach(r=>{indexMap.push(allRecords.indexOf(r));});
+
+  let html='';
+  filtered.forEach((rec,i)=>{
+    const realIdx=indexMap[i];
+    const reco=rec.overallRecommendations||'';
+    const shortReco=reco.length>60?reco.substring(0,60)+'…':reco;
+    html+='<tr>';
+    html+='<td class="cell-date">'+escapeHtml(rec.date||'')+'</td>';
+    html+='<td>'+escapeHtml(rec.branchName||'')+'</td>';
+    html+='<td class="cell-branch">'+escapeHtml(rec.branchCode||'')+'</td>';
+    html+='<td>'+escapeHtml(rec.location||'')+'</td>';
+    html+='<td>'+escapeHtml(rec.conductedBy||'')+'</td>';
+    html+='<td class="cell-ref">'+escapeHtml(rec.refNumber||'')+'</td>';
+    html+='<td class="cell-reco" title="'+escapeHtml(reco)+'">'+escapeHtml(shortReco)+'</td>';
+    html+='<td>';
+    html+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
+    html+='<button class="btn-edit btn-sm" onclick="editRecord('+realIdx+')">Edit</button>';
+    html+='<button class="btn-outline btn-sm" onclick="viewRecord('+realIdx+')">View</button>';
+    html+='<button class="btn-primary btn-sm" onclick="printRecord('+realIdx+')">Print</button>';
+    if(isAdminUser){
+      html+='<button class="btn-danger btn-sm" onclick="deleteRecord('+realIdx+')">Delete</button>';
+    }
+    html+='</div></td>';
+    html+='</tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+// ── Edit Record ──
+function editRecord(idx){
+  if(!allRecords[idx]) return;
+  sessionStorage.setItem('pm_checklist_edit_record', JSON.stringify(allRecords[idx]));
+  sessionStorage.setItem('pm_checklist_edit_index', String(idx));
+  window.location.href='pm_checklist.html?edit='+idx;
+}
+
+// ── View Record ──
+function viewRecord(idx){
+  if(!allRecords[idx]) return;
+  const rec=allRecords[idx];
+  const win=window.open('','','width=1200,height=800,scrollbars=yes');
+  win.document.write(buildProfessionalDoc(rec, false));
+  win.document.close();
+}
+
+// ── Print Record ──
+function printRecord(idx){
+  if(!allRecords[idx]) return;
+  const rec=allRecords[idx];
+  const win=window.open('','','width=1200,height=800,scrollbars=yes');
+  win.document.write(buildProfessionalDoc(rec, true));
+  win.document.close();
+}
+
+// ── Delete Record ──
+async function deleteRecord(idx){
+  if(!isAdminUser){showToast('Admin access required','error');return;}
+  if(!confirm('Delete this checklist record? This cannot be undone.')) return;
+  try{
+    allRecords.splice(idx,1);
+    await FirestoreDB.saveRecords(COLLECTION, allRecords);
+    showToast('Record deleted','success');
+    renderFilteredTable();
+  }catch(e){
+    showToast('Delete failed: '+e.message,'error');
+  }
+}
+
+// ── Professional Print/View Document Builder ──
+function buildProfessionalDoc(rec, autoPrint){
+  function esc(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+  let h='';
+  h+='<!DOCTYPE html><html><head><meta charset="utf-8">';
+  h+='<title>PM Checklist - '+esc(rec.refNumber||'')+'</title>';
+  h+='<style>';
+  h+='@media print{@page{size:portrait;margin:8mm 10mm} .no-print{display:none!important}';
+  h+='html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}';
+  h+='body,td,th,span,div,p{color:#000!important}';
+  h+='.header-band{background:#0033a0!important;color:#fff!important}';
+  h+='.header-band h1,.header-band div,.header-band span{color:#fff!important}';
+  h+='thead th{background:#0033a0!important;color:#fff!important;border-color:#002080!important}';
+  h+='tbody td{border:1px solid #000!important;color:#000!important}';
+  h+='.meta-box{border:1px solid #000!important;background:#f0f4ff!important}';
+  h+='.meta-box h3{color:#0033a0!important;border-bottom:1px solid #000!important}';
+  h+='.section-title{color:#0033a0!important;border-bottom:2px solid #0033a0!important}';
+  h+='.sig-label{color:#000!important}';
+  h+='.sig-line{border-bottom:2px solid #000!important;color:#000!important}';
+  h+='.sig-title{color:#000!important}';
+  h+='.footer span{color:#000!important}';
+  h+='.cat-cell{background:#e8edf5!important;color:#000!important}';
+  h+='}';
+  h+='*{box-sizing:border-box;margin:0;padding:0}';
+  h+='body{font-family:"Segoe UI",Arial,Helvetica,sans-serif;color:#000;padding:16px 20px;font-size:11px;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}';
+  h+='.doc-border{border:2px solid #0033a0;padding:16px 18px;-webkit-box-decoration-break:clone;box-decoration-break:clone}';
+  h+='.header-band{background:#0033a0;color:#fff;padding:12px 16px;border-radius:4px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}';
+  h+='.header-band h1{font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase}';
+  h+='.header-band .doc-id{font-size:10px;text-align:right}';
+  h+='.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:14px}';
+  h+='.meta-box{background:#f0f4ff;border:1px solid #000;border-radius:5px;padding:8px 12px}';
+  h+='.meta-box h3{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#0033a0;font-weight:900;margin-bottom:4px;border-bottom:1px solid #000;padding-bottom:3px}';
+  h+='.meta-row{display:flex;justify-content:space-between;padding:1px 0;font-size:10px}';
+  h+='.meta-row .lbl{color:#000;font-weight:700}';
+  h+='.meta-row .val{color:#000;font-weight:900}';
+  h+='table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:10px}';
+  h+='thead th{background:#0033a0;color:#fff;font-weight:900;font-size:9px;letter-spacing:.4px;text-transform:uppercase;padding:6px 4px;text-align:center;border:1px solid #002080}';
+  h+='thead th:first-child,thead th:nth-child(2){text-align:left}';
+  h+='tbody td{padding:4px 5px;border:1px solid #000;color:#000;font-size:10px;font-weight:500;vertical-align:middle}';
+  h+='.cat-cell{font-weight:900!important;background:#e8edf5;color:#0033a0;font-size:10px;vertical-align:top}';
+  h+='.status-check{text-align:center;font-size:13px;font-weight:900}';
+  h+='.section-title{font-size:11px;font-weight:900;color:#0033a0;text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid #0033a0}';
+  h+='.sig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}';
+  h+='.sig-box{text-align:center;padding:6px}';
+  h+='.sig-label{font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:#000;font-weight:700;margin-bottom:18px}';
+  h+='.sig-line{border-bottom:2px solid #000;padding:5px 3px;min-height:18px;font-size:11px;font-weight:900;color:#000}';
+  h+='.sig-title{font-size:8px;color:#000;font-weight:600;margin-top:2px}';
+  h+='.footer{margin-top:12px;padding-top:6px;border-top:1px solid #000;display:flex;justify-content:space-between;font-size:8px;color:#000;font-weight:600}';
+  h+='.reco-box{background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:8px 12px;font-size:10px;color:#92400e;margin:6px 0}';
+  h+='.print-btn{padding:10px 24px;font-size:13px;cursor:pointer;background:#0033a0;color:#fff;border:none;border-radius:6px;font-weight:700;margin-top:12px}';
+  h+='.print-btn:hover{background:#002080}';
+  h+='</style></head><body>';
+  h+='<div class="doc-border">';
+
+  // Header
+  h+='<div class="header-band">';
+  h+='<div><h1>Preventive Maintenance Checklist</h1></div>';
+  h+='<div class="doc-id"><div style="font-size:12px;font-weight:700">'+esc(rec.refNumber||'')+'</div>';
+  h+='<div>Date: '+esc(rec.date||'')+'</div>';
+  h+='<div>Branch: '+esc(rec.branchCode||'')+'</div></div>';
+  h+='</div>';
+
+  // Meta
+  h+='<div class="meta-grid">';
+  h+='<div class="meta-box"><h3>Branch Information</h3>';
+  h+='<div class="meta-row"><span class="lbl">Branch Name</span><span class="val">'+esc(rec.branchName||'')+'</span></div>';
+  h+='<div class="meta-row"><span class="lbl">Branch Code</span><span class="val">'+esc(rec.branchCode||'')+'</span></div>';
+  h+='<div class="meta-row"><span class="lbl">Location</span><span class="val">'+esc(rec.location||'')+'</span></div>';
+  h+='</div>';
+  h+='<div class="meta-box"><h3>Checklist Details</h3>';
+  h+='<div class="meta-row"><span class="lbl">Date</span><span class="val">'+esc(rec.date||'')+'</span></div>';
+  h+='<div class="meta-row"><span class="lbl">Conducted By</span><span class="val">'+esc(rec.conductedBy||'')+'</span></div>';
+  h+='<div class="meta-row"><span class="lbl">Reference No.</span><span class="val">'+esc(rec.refNumber||'')+'</span></div>';
+  h+='</div></div>';
+
+  // Checklist Table
+  h+='<div class="section-title">Inspection Checklist</div>';
+  h+='<table><thead><tr>';
+  h+='<th style="width:130px">ITEM</th>';
+  h+='<th style="width:260px">ITEM DESCRIPTION</th>';
+  h+='<th style="width:40px">OK</th>';
+  h+='<th style="width:50px">NOT OK</th>';
+  h+='<th style="width:40px">N/A</th>';
+  h+='<th style="width:140px">REMARKS / WORK DONE</th>';
+  h+='<th style="width:140px">RECOMMENDATIONS</th>';
+  h+='</tr></thead><tbody>';
+
+  if(rec.categories){
+    rec.categories.forEach(cat=>{
+      const items=cat.items||[];
+      items.forEach((item,j)=>{
+        h+='<tr>';
+        if(j===0){
+          h+='<td class="cat-cell" rowspan="'+items.length+'">';
+          h+=esc(cat.category);
+          if(cat.subtitle) h+='<br><span style="font-weight:400;font-size:8px">'+esc(cat.subtitle)+'</span>';
+          h+='</td>';
+        }
+        h+='<td>'+esc(item.desc||'')+'</td>';
+        h+='<td class="status-check">'+(item.status==='ok'?'✓':'')+'</td>';
+        h+='<td class="status-check">'+(item.status==='not_ok'?'✗':'')+'</td>';
+        h+='<td class="status-check">'+(item.status==='na'?'—':'')+'</td>';
+        h+='<td>'+esc(item.remarks||'')+'</td>';
+        h+='<td>'+esc(item.recommendations||'')+'</td>';
+        h+='</tr>';
+      });
+    });
+  }
+  h+='</tbody></table>';
+
+  // Overall Recommendations
+  if(rec.overallRecommendations){
+    h+='<div class="section-title">Overall Recommendations</div>';
+    h+='<div class="reco-box">'+esc(rec.overallRecommendations)+'</div>';
+  }
+
+  // Signatories
+  h+='<div class="section-title">Signatories</div>';
+  h+='<div class="sig-grid">';
+  h+='<div class="sig-box"><div class="sig-label">PM Conducted By</div><div class="sig-line">'+esc(rec.sigConducted||'')+'</div><div class="sig-title">Electrical Engineer / Technician</div></div>';
+  h+='<div class="sig-box"><div class="sig-label">Witnessed By</div><div class="sig-line">'+esc(rec.sigWitnessed||'')+'</div><div class="sig-title">Witness</div></div>';
+  h+='<div class="sig-box"><div class="sig-label">Store Manager</div><div class="sig-line">'+esc(rec.sigStoreManager||'')+'</div><div class="sig-title">Store Manager</div></div>';
+  h+='<div class="sig-box"><div class="sig-label">Store Representative</div><div class="sig-line">'+esc(rec.sigStoreRep||'')+'</div><div class="sig-title">Store Representative</div></div>';
+  h+='</div>';
+
+  // Footer
+  h+='<div class="footer"><span>Electrical Preventive Maintenance System</span><span>Generated: '+new Date().toLocaleString()+'</span></div>';
+  h+='</div>'; // close doc-border
+
+  if(autoPrint){
+    h+='<div class="no-print" style="text-align:center;margin-top:14px"><button class="print-btn" onclick="window.focus();window.print();">Print Report</button></div>';
+  }
+  h+='</body></html>';
+  return h;
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', function(){
+  loadRecords();
+});
+</script>
+</body>
+</html>
