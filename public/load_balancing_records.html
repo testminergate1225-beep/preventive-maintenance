@@ -39,16 +39,16 @@
     .table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch}
     table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
     thead th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.4px;padding:10px 6px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
-    tbody td{padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:#334155;font-weight:500;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
+    tbody td{padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:#DAA520;font-weight:500;white-space:normal;word-wrap:break-word;overflow-wrap:break-word}
     tbody tr:hover{background:#f8fafc}
     tbody tr:last-child td{border-bottom:none}
-    .cell-filename{font-weight:700;color:#0b3d91;word-wrap:break-word;overflow-wrap:break-word}
-    .cell-company{font-weight:600;color:#1e293b;word-wrap:break-word;overflow-wrap:break-word}
-    .cell-branch{font-size:11px;font-weight:700;color:#334155;word-wrap:break-word}
+    .cell-filename{font-weight:700;color:#B8860B;word-wrap:break-word;overflow-wrap:break-word}
+    .cell-company{font-weight:600;color:#DAA520;word-wrap:break-word;overflow-wrap:break-word}
+    .cell-branch{font-size:11px;font-weight:700;color:#DAA520;word-wrap:break-word}
     .cell-date{font-size:11px}
-    .cell-time{color:#64748b;font-size:11px}
-    .cell-total{font-weight:700;color:#059669}
-    .cell-remarks{color:#64748b;font-size:11px;word-wrap:break-word;overflow-wrap:break-word}
+    .cell-time{color:#DAA520;font-size:11px}
+    .cell-total{font-weight:700;color:#B8860B}
+    .cell-remarks{color:#DAA520;font-size:11px;word-wrap:break-word;overflow-wrap:break-word}
     .actions-cell{display:flex;gap:4px;flex-wrap:nowrap}
     col.col-filename{width:12%}
     col.col-company{width:10%}
@@ -70,10 +70,10 @@
       .container{padding:12px}
       .toolbar{gap:6px}
       button{padding:8px 12px;font-size:12px}
-      table{font-size:12px}
-      thead th{padding:10px 8px;font-size:10px}
-      tbody td{padding:8px}
-      .actions-cell{flex-wrap:wrap}
+      table{font-size:12px;min-width:900px;table-layout:auto}
+      thead th{padding:10px 8px;font-size:10px;white-space:nowrap}
+      tbody td{padding:8px;white-space:nowrap}
+      .actions-cell{flex-wrap:nowrap}
     }
     @media print{.toolbar,button,.page-header{display:none}.card{box-shadow:none}}
   </style>
