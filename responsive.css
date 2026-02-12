@@ -166,9 +166,6 @@ textarea{
 
   /* Tables → horizontal scroll */
   table{
-    display:block;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
     font-size:11px;
   }
   th,td{
@@ -236,6 +233,32 @@ textarea{
   .view-mtr-btn{
     font-size:11px !important;
     padding:8px 12px !important;
+  }
+
+  /* Floating toggle buttons — scale down on mobile */
+  #view-toggle{
+    padding:9px 12px;
+    font-size:11px;
+    bottom:14px;
+    right:14px;
+  }
+  #header-toggle{
+    padding:8px 10px;
+    font-size:10px;
+    bottom:58px;
+    right:14px;
+  }
+
+  /* Welcome banner */
+  .welcome-banner{padding:10px 12px}
+  .welcome-banner h3{font-size:14px}
+  .welcome-banner p{font-size:11px}
+
+  /* Theme dropdown position fix */
+  .theme-dropdown{
+    left:auto !important;
+    right:0 !important;
+    min-width:160px !important;
   }
 }
 
