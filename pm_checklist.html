@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <title>Preventive Maintenance Checklist</title>
+  <style>
+    :root{--bg:#98baec;--card:#107564;--accent:#0b78d1;--accent-dark:#0960a8;--muted:#6b7280;--border:#d1d5db;--header-bg:linear-gradient(135deg,#0b3d91,#0b78d1)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:#1a1a2e;min-height:100vh}
+    .page-header{background:var(--header-bg);color:#fff;padding:20px 28px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .page-header h1{font-size:22px;font-weight:700;letter-spacing:.3px;margin-bottom:4px}
+    .page-header .subtitle{font-size:13px;opacity:.85}
+    .page-header .nav-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .container{max-width:1400px;margin:0 auto;padding:20px 24px}
+    button{border:0;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+    button:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+    .btn-primary{background:#0b78d1!important;color:#fff!important;border:none!important}
+    .btn-primary:hover{background:#0960a8!important}
+    .btn-secondary{background:#e2e8f0!important;color:#334155!important;border:none!important}
+    .btn-secondary:hover{background:#cbd5e1!important}
+    .btn-sm{padding:6px 12px;font-size:12px;border-radius:4px}
+    .btn-success{background:#16a34a!important;color:#fff!important}
+    .btn-success:hover{background:#15803d!important}
+    .btn-danger{background:#ef4444!important;color:#fff!important}
+    .btn-danger:hover{background:#dc2626!important}
+    .card{background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(250, 0, 0, 0.08);padding:20px;margin-bottom:20px}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px 18px;margin-bottom:16px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;background:#f8fafc;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(11,120,209,.15)}
+    .form-group textarea{min-height:60px;resize:vertical}
+    .section-title{font-size:14px;font-weight:700;color:#0b3d91;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #0b3d91;display:flex;align-items:center;justify-content:space-between}
+    .table-wrapper{overflow:auto;-webkit-overflow-scrolling:touch;max-height:75vh}
+    table.checklist thead tr:first-child th{top:0}
+    table.checklist thead tr:nth-child(2) th{top:30px}
+    table.checklist{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+    table.checklist th{background:#030172;color:#fae901;font-weight:700;font-size:10px;letter-spacing:.4px;text-transform:uppercase;padding:8px 6px;text-align:center;border:1px solid #093272;position:sticky;z-index:2}
+    table.checklist th:first-child,table.checklist th:nth-child(2){text-align:left}
+    table.checklist td{padding:6px 8px;border:1px solid #9dc1f8;vertical-align:middle;font-size:12px;color:#cfab08}
+    table.checklist td:first-child{font-weight:700;background:#04478a;min-width:140px;vertical-align:top}
+    table.checklist td:nth-child(2){min-width:280px}
+    table.checklist td.status-cell{text-align:center;width:55px;min-width:55px;max-width:55px;padding:4px 2px}
+    table.checklist td.remarks-cell{min-width:160px}
+    table.checklist td.recommendations-cell{min-width:220px}
+    table.checklist input[type=radio]{margin:0;cursor:pointer;width:16px;height:16px}
+    table.checklist input[type=text],table.checklist textarea{width:100%;padding:4px 6px;border:1px solid #d2eb90;border-radius:4px;font-size:11px;background:#587e88}
+    table.checklist textarea{min-height:28px;resize:vertical}
+    table.checklist textarea::placeholder{color:#cfab08;opacity:.7}
+    .item-category{background:#818285!important}
+    .item-category td{font-weight:700!important;color:#0b3d91;font-size:12px}
+    .add-row-btn,.remove-row-btn{font-size:10px;padding:3px 8px;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:3px}
+    .add-row-btn{background:#25f86f;color:#166534;border:1px solid #86efac}
+    .add-row-btn:hover{background:#bbf7d0}
+    .remove-row-btn{background:#f03a3a;color:#991b1b;border:1px solid #fca5a5}
+    .remove-row-btn:hover{background:#fecaca}
+    .sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
+    .sig-box{text-align:center}
+    .sig-box .sig-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#475569;font-weight:700;margin-bottom:20px}
+    .sig-box .sig-line{border-bottom:2px solid #000;padding:6px 4px;min-height:20px;font-weight:700;font-size:13px}
+    .sig-box .sig-title{font-size:9px;color:#64748b;margin-top:3px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    .toast{position:fixed;right:18px;bottom:18px;background:rgba(17,24,39,.95);color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 6px 18px rgba(3,10,22,.2);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;z-index:1200;font-size:13px}
+    .toast.show{opacity:1;transform:none}
+    .toast.error{background:#ef4444}
+    .toast.success{background:#16a34a}
+    @media(max-width:768px){
+      .container{padding:12px}
+      .form-grid{grid-template-columns:1fr}
+      .sig-grid{grid-template-columns:1fr 1fr}
+      table.checklist{font-size:11px;min-width:900px}
+      .page-header{padding:14px 16px}
+      .page-header h1{font-size:18px}
+    }
+    @media print{.toolbar,.page-header .nav-row,button,.toast{display:none!important}.page-header{padding:10px 16px;box-shadow:none}}
+  </style>
+  <link rel="stylesheet" href="hangar-theme.css">
+  <link rel="stylesheet" href="responsive.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="auth-guard.js"></script>
+</head>
+<body>
+<div class="page-header">
+  <h1>Preventive Maintenance Checklist</h1>
+  <p class="subtitle">Electrical equipment inspection and maintenance record</p>
+  <div class="nav-row">
+    <button class="btn-secondary btn-sm" onclick="window.location.href='index.html'">← Home</button>
+    <button class="btn-secondary btn-sm" onclick="window.location.href='pm_checklist_records.html'">View Saved Records</button>
+  </div>
+</div>
+
+<div class="container">
+  <div id="toast" class="toast"></div>
+
+  <!-- Header Info Card -->
+  <div class="card">
+    <div class="section-title" style="margin-top:0">Checklist Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="branch-name">Branch Name</label>
+        <input id="branch-name" type="text" list="branch-name-list" placeholder="Select or type branch name" autocomplete="off"/>
+        <datalist id="branch-name-list">
+          <option value="Funhouse"></option>
+          <option value="TOMSWORLD"></option>
+          <option value="ADAMS QUEST"></option>
+          <option value="JACKS ADVENTURE"></option>
+          <option value="AUSTINLAND"></option>
+        </datalist>
+      </div>
+      <div class="form-group">
+        <label for="branch-code">Branch Code</label>
+        <input id="branch-code" type="text" placeholder="Enter branch code"/>
+      </div>
+      <div class="form-group">
+        <label for="checklist-location">Location</label>
+        <input id="checklist-location" type="text" placeholder="Mall / Building name / Exact Address"/>
+      </div>
+      <div class="form-group">
+        <label for="checklist-date">Date Created</label>
+        <input id="checklist-date" type="date"/>
+      </div>
+      <div class="form-group">
+        <label for="conducted-by">Conducted By</label>
+        <input id="conducted-by" type="text" placeholder="Auto-populated" readonly/>
+      </div>
+      <div class="form-group">
+        <label for="ref-number">Reference Number</label>
+        <input id="ref-number" type="text" placeholder="PM-YYYYMMDDHHSS" readonly/>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checklist Table Card -->
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn-primary" id="btn-save">💾 Save Checklist</button>
+      <button class="btn-secondary" id="btn-print" onclick="window.print()">🖨️ Print</button>
+      <button class="btn-secondary" id="btn-clear-form">🗑️ Clear Form</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="checklist" id="checklist-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:140px">ITEM</th>
+            <th rowspan="2" style="width:300px">ITEM DESCRIPTION</th>
+            <th colspan="3" style="text-align:center;width:165px">STATUS</th>
+            <th rowspan="2" style="width:180px">REMARKS / WORK DONE</th>
+            <th rowspan="2" style="width:240px">RECOMMENDATIONS</th>
+          </tr>
+          <tr>
+            <th style="width:55px;min-width:55px">OK</th>
+            <th style="width:55px;min-width:55px">NOT OK</th>
+            <th style="width:55px;min-width:55px">N/A</th>
+          </tr>
+        </thead>
+        <tbody id="checklist-body">
+          <!-- Rows populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Signatories Card -->
+  <div class="card">
+    <div class="section-title" style="margin-top:0">Signatories</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-group">
+        <label for="sig-conducted">Conducted By</label>
+        <input id="sig-conducted" type="text" placeholder="Name"/>
+      </div>
+      <div class="form-group">
+        <label for="sig-witnessed">Witnessed By</label>
+        <input id="sig-witnessed" type="text" placeholder="Name"/>
+      </div>
+      <div class="form-group">
+        <label for="sig-store-manager">Store Manager</label>
+        <input id="sig-store-manager" type="text" placeholder="Name"/>
+      </div>
+      <div class="form-group">
+        <label for="sig-store-rep">Store Representative</label>
+        <input id="sig-store-rep" type="text" placeholder="Name"/>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label for="overall-recommendations">Overall Recommendations</label>
+      <textarea id="overall-recommendations" placeholder="Enter overall recommendations for this checklist..."></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Checklist Data Definition ──
+const CHECKLIST_ITEMS = [
+  {
+    category: '1. Panel Boards',
+    subtitle: '(power panel, lighting panel, emergency panel, control panel, circuit breaker, busbar, panel box)',
+    items: [
+      'a. Circuit breaker / Feederline temperature',
+      'b. Circuit breaker bolts',
+      'c. Terminal Lugs',
+      'd. Panel Board Enclosure - Cleanliness',
+      'e. Full load line - current balancing',
+      'f. Busbar Bolts',
+      'g. Circuit Directory / Panel board - Name Tag',
+      'h. Power-on Delay ( Timer, magnetic Contactor )',
+      'i. Wires and Cable'
+    ]
+  },
+  {
+    category: '2. Lighting',
+    subtitle: '(blue lights, dome lights, down lights, cove lights, signage, emergency lights and auxiliary lighting)',
+    items: [
+      'a. Bluelights - Canopy Covelight ( SMD LED STRIPS )',
+      'b. warmwhite - Canopy Covelight ( SMD LED STRIPS )',
+      'c. Dome light / Dome Reflector',
+      'd. LED Fluorescents tube',
+      'e. Entrance and exit signage',
+      'f. Addressable LED Lights',
+      'g. Emergency Lights',
+      'h. Auxiliary lighting',
+      'i. Wires and Cable',
+      'j. Others'
+    ]
+  },
+  {
+    category: '3. Convenience Outlet',
+    subtitle: '(power, data and telephone outlet)',
+    items: [
+      'a. Floor Convenience outlet - FCO',
+      'b. Convenience outlet - CO',
+      'c. DATA and Telephone Outlet',
+      'd. Wall Outlet - WCO',
+      'e. Emergency light CO',
+      'f. Table Top CO',
+      'g. Others'
+    ]
+  },
+  {
+    category: '4. Switches',
+    subtitle: '',
+    items: [
+      'a. Switch Plate and cover',
+      'b. Magnetic Switch - magnetic contactor',
+      'c. Pushbutton switch / nc /no',
+      'd. Control wires and cables',
+      'e. Wifi controlled switch',
+      'f. 2 gang switch',
+      'g. 1 gang switch',
+      'h. Timed switch - 24hr timer'
+    ]
+  },
+  {
+    category: '5. Transformer',
+    subtitle: '(Cooling fan, enclosure, terminal lugs primary and secondary)',
+    items: [
+      'a. Input and Output voltage',
+      'b. Temperature',
+      'c. Bolt and nuts',
+      'd. Terminal Lugs - LINE 1, LINE 2, LINE 3, NEUTRAL',
+      'e. Cooling Fan',
+      'f. Grounding terminal Lugs',
+      'g. Terminal busbar',
+      'h. Full load current',
+      'i. Enclosure - NEMA 1'
+    ]
+  },
+  {
+    category: '6. Air Conditioning Unit',
+    subtitle: '( Main circuit breaker, FCU AND ACCU )',
+    items: [
+      'a. Air Filter',
+      'b. Thermostat settings - verify if match the desired temperature output',
+      'c. Drain pans - Check for moisture buildup and clean drain pans to prevent clogs',
+      'd. Refrigerant level',
+      'e. Main Circuit Breaker',
+      'f. Wires and Cable',
+      'g. Electrical Controls',
+      'h. Others'
+    ]
+  },
+  {
+    category: '7. Fire Alarm System',
+    subtitle: '',
+    items: [
+      'a. Smoke Detectors',
+      'b. Heat Detectors',
+      'c. Manual Call Points',
+      'd. Fire Alarm Control Panel',
+      'e. Bell / Strobe / Horn',
+      'f. Wiring and Cable',
+      'g. Battery Backup',
+      'h. Others'
+    ]
+  },
+  {
+    category: '8. CCTV',
+    subtitle: '',
+    items: [
+      'a. Video Signal',
+      'b. Camera and lense housing',
+      'c. Wiring connection',
+      'd. NVR/DVR - Cooling fans',
+      'e. Recording and playback',
+      'd. UPS Battery'
+    ]
+  }
+];
+
+// ── Global State ──
+let isEditMode = false;
+let editRecordIndex = -1;
+
+// ── Utility ──
+function escapeHtml(s){ return String(s||'').replace(/[&<>\"\']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
+function showToast(msg, type='info', ms=2400){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.className='toast '+type;
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),ms);
+}
+function generateRefNumber(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return 'PM-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+}
+
+// ── Build Checklist Table ──
+function buildChecklistTable(data){
+  const tbody=document.getElementById('checklist-body');
+  tbody.innerHTML='';
+  CHECKLIST_ITEMS.forEach((cat,catIdx)=>{
+    // Category header row
+    const catRow=document.createElement('tr');
+    catRow.className='item-category';
+    catRow.dataset.catIdx=catIdx;
+    const catTd=document.createElement('td');
+    catTd.setAttribute('rowspan', '1');
+    catTd.innerHTML='<div>'+escapeHtml(cat.category)+'</div>'+(cat.subtitle?'<div style="font-weight:400;font-size:10px;color:#64748b;margin-top:2px">'+escapeHtml(cat.subtitle)+'</div>':'');
+    catTd.innerHTML+='<div style="margin-top:6px"><button class="add-row-btn" data-cat="'+catIdx+'" title="Add row">+ Add</button> <button class="remove-row-btn" data-cat="'+catIdx+'" title="Remove last row">− Remove</button></div>';
+    catRow.appendChild(catTd);
+    // First item in same row
+    const items = data ? (data[catIdx]||cat.items.map(i=>({desc:i,status:'',remarks:'',recommendations:''}))) : cat.items.map(i=>({desc:i,status:'',remarks:'',recommendations:''}));
+    if(items.length>0){
+      appendItemCells(catRow, items[0], catIdx, 0);
+    }
+    tbody.appendChild(catRow);
+
+    // Update rowspan
+    catTd.setAttribute('rowspan', items.length||1);
+
+    // Remaining items
+    for(let i=1;i<items.length;i++){
+      const row=document.createElement('tr');
+      row.dataset.catIdx=catIdx;
+      row.dataset.itemIdx=i;
+      appendItemCells(row, items[i], catIdx, i);
+      tbody.appendChild(row);
+    }
+  });
+
+  // Attach add/remove event listeners
+  tbody.querySelectorAll('.add-row-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      addItemRow(parseInt(btn.dataset.cat));
+    });
+  });
+  tbody.querySelectorAll('.remove-row-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      removeItemRow(parseInt(btn.dataset.cat));
+    });
+  });
+}
+
+function appendItemCells(row, item, catIdx, itemIdx){
+  row.dataset.catIdx=catIdx;
+  row.dataset.itemIdx=itemIdx;
+  const descTd=document.createElement('td');
+  descTd.innerHTML='<input type="text" value="'+escapeHtml(typeof item==='string'?item:item.desc)+'" class="item-desc"/>';
+  row.appendChild(descTd);
+
+  const status = typeof item==='string'?'':item.status;
+  const name='status_'+catIdx+'_'+itemIdx;
+  ['ok','not_ok','na'].forEach(val=>{
+    const td=document.createElement('td');
+    td.className='status-cell';
+    const inp=document.createElement('input');
+    inp.type='radio';
+    inp.name=name;
+    inp.value=val;
+    if(status===val) inp.checked=true;
+    td.appendChild(inp);
+    row.appendChild(td);
+  });
+
+  const remTd=document.createElement('td');
+  remTd.className='remarks-cell';
+  remTd.innerHTML='<textarea class="item-remarks" placeholder="Remarks">'+escapeHtml(typeof item==='string'?'':item.remarks||'')+'</textarea>';
+  row.appendChild(remTd);
+
+  const recTd=document.createElement('td');
+  recTd.className='recommendations-cell';
+  recTd.innerHTML='<textarea class="item-reco" placeholder="Recommendations">'+escapeHtml(typeof item==='string'?'':item.recommendations||'')+'</textarea>';
+  row.appendChild(recTd);
+}
+
+function addItemRow(catIdx){
+  const tbody=document.getElementById('checklist-body');
+  const rows=tbody.querySelectorAll('tr[data-cat-idx="'+catIdx+'"]');
+  const lastRow=rows[rows.length-1];
+  const currentItemCount=rows.length;
+
+  // Create new row
+  const newRow=document.createElement('tr');
+  const item={desc:'',status:'',remarks:'',recommendations:''};
+  appendItemCells(newRow, item, catIdx, currentItemCount);
+  lastRow.after(newRow);
+
+  // Update rowspan on category cell
+  const catRow=tbody.querySelector('tr.item-category[data-cat-idx="'+catIdx+'"]');
+  if(catRow){
+    const catTd=catRow.querySelector('td:first-child');
+    catTd.setAttribute('rowspan', currentItemCount+1);
+  }
+  // Update radio names
+  const radios=newRow.querySelectorAll('input[type=radio]');
+  radios.forEach(r=>r.name='status_'+catIdx+'_'+currentItemCount);
+}
+
+function removeItemRow(catIdx){
+  const tbody=document.getElementById('checklist-body');
+  const rows=tbody.querySelectorAll('tr[data-cat-idx="'+catIdx+'"]');
+  if(rows.length<=1) return; // keep at least one row
+  const lastRow=rows[rows.length-1];
+  lastRow.remove();
+  // Update rowspan
+  const catRow=tbody.querySelector('tr.item-category[data-cat-idx="'+catIdx+'"]');
+  if(catRow){
+    const catTd=catRow.querySelector('td:first-child');
+    catTd.setAttribute('rowspan', rows.length-1);
+  }
+}
+
+// ── Collect Form Data ──
+function collectFormData(){
+  const tbody=document.getElementById('checklist-body');
+  const categories=[];
+  CHECKLIST_ITEMS.forEach((cat,catIdx)=>{
+    const rows=tbody.querySelectorAll('tr[data-cat-idx="'+catIdx+'"]');
+    const items=[];
+    rows.forEach((row,i)=>{
+      const descInput=row.querySelector('.item-desc');
+      const desc=descInput?descInput.value:'';
+      const radios=row.querySelectorAll('input[type=radio]');
+      let status='';
+      radios.forEach(r=>{ if(r.checked) status=r.value; });
+      const remarks=row.querySelector('.item-remarks');
+      const reco=row.querySelector('.item-reco');
+      items.push({
+        desc: desc,
+        status: status,
+        remarks: remarks?remarks.value:'',
+        recommendations: reco?reco.value:''
+      });
+    });
+    categories.push({
+      category: cat.category,
+      subtitle: cat.subtitle,
+      items: items
+    });
+  });
+
+  return {
+    branchName: document.getElementById('branch-name').value,
+    branchCode: document.getElementById('branch-code').value,
+    location: document.getElementById('checklist-location').value,
+    date: document.getElementById('checklist-date').value,
+    conductedBy: document.getElementById('conducted-by').value,
+    refNumber: document.getElementById('ref-number').value,
+    sigConducted: document.getElementById('sig-conducted').value,
+    sigWitnessed: document.getElementById('sig-witnessed').value,
+    sigStoreManager: document.getElementById('sig-store-manager').value,
+    sigStoreRep: document.getElementById('sig-store-rep').value,
+    overallRecommendations: document.getElementById('overall-recommendations').value,
+    categories: categories,
+    savedAt: new Date().toISOString()
+  };
+}
+
+// ── Populate Form from Record ──
+function populateForm(rec){
+  document.getElementById('branch-name').value=rec.branchName||'';
+  document.getElementById('branch-code').value=rec.branchCode||'';
+  document.getElementById('checklist-location').value=rec.location||'';
+  document.getElementById('checklist-date').value=rec.date||'';
+  document.getElementById('conducted-by').value=rec.conductedBy||'';
+  document.getElementById('ref-number').value=rec.refNumber||'';
+  document.getElementById('sig-conducted').value=rec.sigConducted||'';
+  document.getElementById('sig-witnessed').value=rec.sigWitnessed||'';
+  document.getElementById('sig-store-manager').value=rec.sigStoreManager||'';
+  document.getElementById('sig-store-rep').value=rec.sigStoreRep||'';
+  document.getElementById('overall-recommendations').value=rec.overallRecommendations||'';
+
+  // Build table with saved data
+  if(rec.categories){
+    const catData=[];
+    rec.categories.forEach((c,idx)=>{
+      catData[idx]=c.items||[];
+    });
+    buildChecklistTable(catData);
+  }
+}
+
+// ── Save to Firebase ──
+async function saveChecklist(){
+  const data=collectFormData();
+  if(!data.branchName){showToast('Please select a Branch Name','error');return;}
+  if(!data.date){showToast('Please select a Date','error');return;}
+
+  try{
+    await initFirebase();
+    const records=await FirestoreDB.loadRecords('epm_pm_checklist_v1');
+
+    if(isEditMode && editRecordIndex>=0 && editRecordIndex<records.length){
+      records[editRecordIndex]=data;
+      showToast('Checklist updated successfully!','success');
+    } else {
+      records.unshift(data);
+      showToast('Checklist saved successfully!','success');
+    }
+    await FirestoreDB.saveRecords('epm_pm_checklist_v1', records);
+
+    // Clear edit mode
+    if(isEditMode){
+      isEditMode=false;
+      editRecordIndex=-1;
+      sessionStorage.removeItem('pm_checklist_edit_record');
+      sessionStorage.removeItem('pm_checklist_edit_index');
+      // Redirect to records
+      setTimeout(()=>window.location.href='pm_checklist_records.html',1200);
+    }
+  } catch(e){
+    console.error('Save error:',e);
+    showToast('Failed to save checklist','error');
+  }
+}
+
+// ── Clear Form ──
+function clearForm(){
+  document.getElementById('branch-name').value='';
+  document.getElementById('branch-code').value='';
+  document.getElementById('checklist-location').value='';
+  document.getElementById('checklist-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('conducted-by').value='';
+  document.getElementById('ref-number').value=generateRefNumber();
+  document.getElementById('sig-conducted').value='';
+  document.getElementById('sig-witnessed').value='';
+  document.getElementById('sig-store-manager').value='';
+  document.getElementById('sig-store-rep').value='';
+  document.getElementById('overall-recommendations').value='';
+  buildChecklistTable(null);
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', async function(){
+  // Set today's date
+  document.getElementById('checklist-date').value=new Date().toISOString().split('T')[0];
+  // Generate ref number
+  document.getElementById('ref-number').value=generateRefNumber();
+
+  // Build checklist table
+  buildChecklistTable(null);
+
+  // Auto-populate conducted by from auth
+  try{
+    await initFirebase();
+    const user=window.AuthGuard?window.AuthGuard.getCurrentUser():null;
+    if(user && user.displayName){
+      document.getElementById('conducted-by').value=user.displayName;
+      document.getElementById('sig-conducted').value=user.displayName;
+    } else if(user && user.email){
+      document.getElementById('conducted-by').value=user.email.split('@')[0];
+      document.getElementById('sig-conducted').value=user.email.split('@')[0];
+    }
+  }catch(e){}
+
+  // Check edit mode
+  const params=new URLSearchParams(window.location.search);
+  if(params.has('edit')){
+    isEditMode=true;
+    editRecordIndex=parseInt(params.get('edit'));
+    const stored=sessionStorage.getItem('pm_checklist_edit_record');
+    if(stored){
+      try{
+        const rec=JSON.parse(stored);
+        populateForm(rec);
+        document.querySelector('.page-header h1').textContent='Edit Preventive Maintenance Checklist';
+      }catch(e){}
+    }
+  }
+
+  // Button events
+  document.getElementById('btn-save').addEventListener('click', saveChecklist);
+  document.getElementById('btn-clear-form').addEventListener('click', ()=>{
+    if(confirm('Clear all form data?')) clearForm();
+  });
+});
+</script>
+</body>
+</html>
