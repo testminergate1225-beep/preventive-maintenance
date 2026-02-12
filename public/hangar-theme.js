@@ -30,10 +30,9 @@
       });
     });
   }
-
-  /*Disabled for now - may re-enable later*/
+/*Disabled for now - may re-enable later*/
   /* ── 2  SCANNING BEAM ────────────────────────────────────── */
- /* function createScanBeam(){
+  /*function createScanBeam(){
     const beam = document.createElement('div');
     beam.id = 'hangar-scan';
     beam.setAttribute('aria-hidden','true');
@@ -136,7 +135,7 @@
   /* ── INIT ────────────────────────────────────────────────── */
   function init(){
     var bg = createBackground();
-    /*createScanBeam(); */
+    /*createScanBeam();*/
     createIntro();
     createDots(8);
     addLightStrips();
