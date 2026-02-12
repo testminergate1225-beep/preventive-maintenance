@@ -6,55 +6,104 @@
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <title>Load Balancing & Full Load Test - 3-Phase</title>
   <style>
-    :root{--bg:#053daf;--card:#685904;--accent:#0b78d1;--muted:#6b7280}
+    :root{--bg:#eef1f5;--card:#fff;--accent:#0b78d1;--accent-dark:#2f5496;--muted:#374151;--border:#bfbfbf}
     *{box-sizing:border-box}
-    body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background: var(--bg) url('images/tw_bg.png') no-repeat center top/cover;background-attachment:fixed;color:#111}
-    .wrap{max-width:1100px;margin:20px auto;padding:16px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    header h1{font-size:20px;margin:0}
-    .back-home-btn{position:fixed;top:20px;right:20px;z-index:1000;background:var(--accent);color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;font-weight:600}
-    .back-home-btn:hover{background:#0a6bbf;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
-    .grid{display:grid;grid-template-columns:1fr 420px;gap:16px}
-    .card{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
-    label{display:block;font-size:13px;margin-top:10px;color:var(--muted)}
-    input[type=text],input[type=number],select,textarea{width:100%;padding:8px;border:1px solid #e6e9ee;border-radius:6px}
+    body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:0;background:var(--bg) url('images/tw_bg.png') no-repeat center top/cover;background-attachment:fixed;color:#111;font-size:15px}
+    .wrap{max-width:1200px;margin:20px auto;padding:16px}
+    .back-home-btn{position:fixed;top:20px;right:20px;z-index:1000;background:var(--accent);color:#fff;border:0;padding:10px 16px;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:14px;font-weight:700}
+    .back-home-btn:hover{background:#0a6bbf;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+    /* Form Header */
+    .form-header{background:#fff;border:2px solid #333;border-radius:4px;margin-bottom:14px;overflow:hidden}
+    .form-header table{width:100%;border-collapse:collapse}
+    .form-header td{padding:8px 12px;border:1px solid var(--border);font-size:15px;color:#111}
+    .form-header .lbl{font-weight:800;background:#e8ecf4;width:150px;white-space:nowrap;color:#111;text-transform:uppercase;font-size:14px;letter-spacing:.4px}
+    .form-header input,.form-header select{border:none;border-bottom:2px dotted #666;background:transparent;padding:5px 2px;width:100%;font-size:15px;font-weight:600;color:#111;outline:none;border-radius:0}
+    .form-header input:focus,.form-header select:focus{border-bottom-color:var(--accent);border-bottom-style:solid}
+    /* System Info Bar */
+    .system-info-bar{background:#fff;border:2px solid #333;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;border-radius:4px;font-size:15px;font-weight:700}
+    .system-info-bar label{display:inline;margin:0;font-weight:700;font-size:14px;color:#111;white-space:nowrap}
+    .system-info-bar input,.system-info-bar select{border:none;border-bottom:2px dotted #666;background:transparent;padding:4px;font-size:15px;font-weight:600;color:#111;outline:none;border-radius:0}
+    .system-info-bar input:focus,.system-info-bar select:focus{border-bottom-color:var(--accent);border-bottom-style:solid}
+    .sys-sep{color:#555;margin:0 4px;font-weight:400}
+    /* Tabs */
+    .tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:3px solid #4472c4}
+    .tab{padding:10px 22px;cursor:pointer;border:1px solid #ccc;border-bottom:none;background:#e9eef6;font-weight:700;font-size:15px;border-radius:6px 6px 0 0;margin-right:2px;color:#333;transition:background .15s}
+    .tab.active{background:#fff;border-color:#4472c4;border-bottom:3px solid #fff;color:#111;margin-bottom:-3px}
+    .tab:hover:not(.active){background:#dce3f0}
+    /* Grid */
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    .card{background:var(--card);padding:16px;border-radius:6px;box-shadow:0 1px 8px rgba(189, 150, 150, 0.07);border:1px solid #a77777}
+    label{display:block;font-size:14px;margin-top:10px;color:#222;font-weight:600}
+    input[type=text],input[type=number],select,textarea{width:100%;padding:9px;border:1px solid #aab0ba;border-radius:4px;font-size:15px;color:#111;font-weight:500}
     .small{width:120px;display:inline-block}
+    /* Circuit Details Row */
+    .circuit-details-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:12px;background:#5e6c96;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:12px}
+    .circuit-details-row label{margin-top:0;font-size:14px;font-weight:700;color:#111}
+    .circuit-details-row input{padding:8px;font-size:15px;font-weight:500;color:#111}
+    /* Table */
     table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:8px;border-bottom:1px solid #eef1f4;text-align:left;font-size:13px}
-    th{background:#fbfdff;position:sticky;top:0}
+    th,td{padding:8px 10px;border:1px solid #8eaadb;text-align:left;font-size:14px;color:#045c13;font-weight:500}
+    th{background:#4472c4;color:#fff;text-align:center;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0}
+    #lb-body tr:nth-child(even){background:#182633}
+    #lb-body tr:nth-child(odd){background:#182633}
+    #lb-body tr:hover{background:#182633}
+    /* Toolbar & Buttons */
     .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    button{background:var(--accent);color:#fff;border:0;padding:8px 10px;border-radius:6px;cursor:pointer}
-    button.ghost{background:#fff;color:var(--accent);border:1px solid rgba(11,120,209,0.12)}
-    .muted{color:var(--muted);font-size:13px}
-    .bars{display:flex;gap:8px;align-items:end;height:120px;padding:12px;border-radius:6px;background:#f8fbff;margin-top:8px}
-    .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px;border-radius:6px}
-    .bar .fill{width:60%;background:linear-gradient(180deg,var(--accent),#0b78d1);border-radius:6px}
-    .label{font-size:13px;margin-top:8px}
-    .tabs{display:flex;gap:8px;margin-bottom:12px}
-    .tab{padding:8px 10px;border-radius:8px;background:#fff;cursor:pointer;border:1px solid transparent}
-    .tab.active{background:linear-gradient(180deg,#eef8ff,#e6f3ff);border-color:rgba(11,120,209,0.12)}
-    @media (max-width:980px){.grid{grid-template-columns:1fr}}	@media (max-width:768px){
-		.wrap{margin:10px auto;padding:10px}
-		header h1{font-size:16px}
-		.back-home-btn{top:10px;right:10px;padding:8px 12px;font-size:11px}
-		.card{padding:10px}
-		label{font-size:12px;margin-top:8px}
-		input[type=text],input[type=number],select,textarea{padding:6px;font-size:12px}
-		button{padding:6px 8px;font-size:12px}
-		table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:11px}
-		th,td{padding:6px;font-size:11px;white-space:nowrap}
-		.bars{height:100px;padding:8px}
-		.bar .fill{width:50%}
-		.label{font-size:11px}
-		.tabs{gap:6px}
-		.tab{padding:6px 8px;font-size:12px}
-	}
-	@media (max-width:600px){
-		#branch-code,#company-name,#location-name{margin-bottom:6px}
-		div[style*="display:flex"]{flex-direction:column!important}
-		div[style*="width:"]{width:100%!important}
-		.small{width:100%!important}
-	}  </style>
+    button{background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;transition:background .15s}
+    button:hover{background:#0a6bbf}
+    button.ghost{background:#fff;color:#0b78d1;border:2px solid #0b78d1;font-weight:700}
+    button.ghost:hover{background:#e8f4ff;border-color:#0a6bbf}
+    .muted{color:#374151;font-size:14px;font-weight:500}
+    /* Summary Bars */
+    .bars{display:flex;gap:8px;align-items:end;height:120px;padding:12px;border-radius:6px;background:#f0f4fa;margin-top:8px;border:1px solid #e0e0e0}
+    .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px;border-radius:4px}
+    .bar .fill{width:60%;background:linear-gradient(180deg,#4472c4,#2f5496);border-radius:4px}
+    .label{font-size:14px;margin-top:8px;font-weight:700;color:#111}
+    /* Panel Info */
+    .panel-info-row{display:flex;gap:12px;align-items:center;margin-top:14px;padding:12px 14px;background:#b65151;border:1px solid #000000;border-radius:4px}
+    .panel-info-row label{margin:0;font-size:15px;font-weight:700;white-space:nowrap;color:#111}
+    /* Signature Section */
+    .signature-section{margin-top:16px;padding:16px;background:#fff;border:2px solid #333;border-radius:4px}
+    .signature-section h3{margin:0 0 14px;font-size:16px;text-transform:uppercase;letter-spacing:.5px;color:#111;border-bottom:2px solid #4472c4;padding-bottom:6px;font-weight:800}
+    .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 40px}
+    .sig-block{font-size:14px}
+    .sig-block .sig-label{font-weight:800;margin-bottom:6px;text-transform:uppercase;font-size:14px;letter-spacing:.4px;color:#111}
+    .sig-block input{border:none;border-bottom:2px solid #333;background:transparent;width:100%;padding:6px 2px;font-size:15px;font-weight:600;color:#111;outline:none;border-radius:0}
+    .sig-block input:focus{border-bottom-color:var(--accent)}
+    .sig-block .sig-title{font-size:13px;color:#333;text-align:center;margin-top:4px;font-style:italic;font-weight:600}
+    .sig-block .sig-sub{margin-top:10px;font-size:13px;color:#333;font-weight:500}
+    .sig-block .sig-sub div{margin:3px 0;border-bottom:1px dotted #888;padding-bottom:2px}
+    /* Responsive */
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    @media(max-width:768px){
+      .wrap{margin:10px auto;padding:10px}
+      .back-home-btn{top:10px;right:10px;padding:8px 12px;font-size:13px}
+      .card{padding:10px}
+      label{font-size:13px;margin-top:8px}
+      input[type=text],input[type=number],select,textarea{padding:7px;font-size:14px}
+      button{padding:7px 10px;font-size:13px}
+      table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:13px}
+      th,td{padding:6px;font-size:13px;white-space:nowrap}
+      .bars{height:100px;padding:8px}
+      .bar .fill{width:50%}
+      .label{font-size:11px}
+      .tabs{gap:0}
+      .tab{padding:6px 10px;font-size:12px}
+      .form-header td{padding:4px 6px;font-size:12px}
+      .form-header .lbl{width:auto}
+      .system-info-bar{flex-direction:column;align-items:flex-start;gap:6px;font-size:12px}
+      .sig-grid{grid-template-columns:1fr;gap:16px}
+      .circuit-details-row{grid-template-columns:1fr 1fr;gap:8px}
+      .panel-info-row{flex-direction:column;align-items:stretch;gap:8px}
+    }
+    @media(max-width:600px){
+      .circuit-details-row{grid-template-columns:1fr}
+      div[style*="display:flex"]{flex-direction:column!important}
+      div[style*="width:"]{width:100%!important}
+      .small{width:100%!important}
+    }
+    @media print{.toolbar,button,.back-home-btn,.tabs{display:none!important}}
+  </style>
   <link rel="stylesheet" href="hangar-theme.css">
   <link rel="stylesheet" href="responsive.css">
   <!-- Firebase SDK -->
@@ -68,65 +117,90 @@
   <button class="back-home-btn" onclick="window.location.href='index.html'">← Back to Home Page</button>
   
   <div class="wrap">
-    <header>
-      <h1>Load Balancing & Full Load Test</h1>
-      <div class="muted">File: <code>load_balancing_form.html</code></div>
-    </header>
+    <!-- Professional Form Header -->
+    <div class="form-header">
+      <table>
+        <tr>
+          <td class="lbl">Company Name</td>
+          <td colspan="3"><input id="company-name" type="text" placeholder="Enter company name" /></td>
+        </tr>
+        <tr>
+          <td class="lbl">Location</td>
+          <td><input id="location-name" type="text" placeholder="Enter location" /></td>
+          <td class="lbl">Branch Code</td>
+          <td><input id="branch-code" type="text" placeholder="Code" /></td>
+        </tr>
+        <tr>
+          <td class="lbl">Subject</td>
+          <td><strong style="color:#2f5496">LOAD BALANCING &amp; FULL LOAD TEST</strong></td>
+          <td class="lbl">Date</td>
+          <td><input id="form-date" type="date" /></td>
+        </tr>
+        <tr>
+          <td class="lbl">Time</td>
+          <td><input id="form-time" type="time" /></td>
+          <td class="lbl">Form</td>
+          <td class="muted" style="font-size:12px">load_balancing_form.html</td>
+        </tr>
+      </table>
+    </div>
 
+
+    <!-- Panel Board Info -->
+    <div class="panel-info-row">
+      <label for="panel-board">Panel Board:</label>
+      <input id="panel-board" type="text" placeholder="Panel Board Name" style="flex:1" />
+      <span class="muted">Panel appears on printable form</span>
+    </div>
+
+    <!-- System Voltage & Power Configuration -->
+    <div class="system-info-bar">
+      <span style="font-weight:700;color:#222">SYSTEM VOLTAGE :</span>
+      <label>V(L-L)</label>
+      <input id="v-line-line" type="number" step="0.1" placeholder="V" style="width:80px" />
+      <label>V(L-N)</label>
+      <input id="v-line-neutral" type="number" step="0.1" placeholder="V" style="width:80px" />
+      <label>V(Ph)</label>
+      <input id="v-phase" type="number" step="0.1" placeholder="V" style="width:80px" />
+      <span class="sys-sep">:</span>
+      <span style="font-weight:700;color:#222">POWER SYSTEM CONFIGURATION :</span>
+      <select id="circuit-type" style="width:auto;min-width:220px">
+        <option value="single_ln">Single Phase (Line-to-Neutral)</option>
+        <option value="single_llc">Single Phase (Line-to-Line / Combined)</option>
+        <option value="single_ll">Single Phase (Line-to-Line / Split)</option>
+        <option value="three_wye">Three Phase (Wye / Line-to-Neutral)</option>
+        <option value="three_delta">Three Phase (Delta / Line-to-Line)</option>
+      </select>
+    </div>
+
+    <!-- Tabs -->
     <div class="tabs">
       <div class="tab active" id="tab-balance">Load Balancing</div>
       <div class="tab" id="tab-fulltest">Full Load Test</div>
     </div>
 
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input id="branch-code" type="text" placeholder="Branch Code" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />  
-      <input id="company-name" type="text" placeholder="Company name" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
-      <input id="location-name" type="text" placeholder="Location" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
-    </div>
-
     <div class="grid">
       <!-- Main column -->
       <main class="card">
-        <!-- Circuit selector -->
-        <label for="circuit-type"><strong>Circuit Type</strong></label>
-        <select id="circuit-type">
-          <option value="single_ln">Single Phase (Line-to-Neutral)</option>
-          <option value="single_llc">Single Phase (Line-to-Line / Combined Phase)</option>
-          <option value="single_ll">Single Phase (Line-to-Line / Split Phase)</option>
-          <option value="three_wye">Three Phase (Wye / Line-to-Neutral)</option>
-          <option value="three_delta">Three Phase (Delta / Line-to-Line)</option>
-        </select>
-
-        <div style="display:flex;gap:8px;margin-top:10px;align-items:end">
-          <div style="width:180px">
-            <label for="v-line-line">Line-to-Line Voltage (V)</label>
-            <input id="v-line-line" type="number" step="0.1" placeholder="V LL" />
-          </div>
-          <div style="width:180px">
-            <label for="v-line-neutral">Line-to-Neutral Voltage (V)</label>
-            <input id="v-line-neutral" type="number" step="0.1" placeholder="V LN" />
-          </div>
-          <div style="width:140px">
-            <label for="v-phase">Phase Voltage (V)</label>
-            <input id="v-phase" type="number" step="0.1" placeholder="V ph" />
-          </div>
-        </div>
-
         <!-- Load Balancing Form -->
         <section id="balance-section">
-          <h2 style="margin-top:12px">Add Circuit Load</h2>
-          <div style="display:flex;gap:8px;align-items:end;margin-bottom:8px">
-            <div style="width:220px">
-              <label for="mcb-capacity">Main Circuit Breaker Capacity (A)</label>
-              <input id="mcb-capacity" type="number" step="1" placeholder="A" />
+          <h2 style="margin:0 0 10px;font-size:16px;color:#fcd600">Add Circuit Load</h2>
+          <div class="circuit-details-row">
+            <div>
+              <label for="mcb-capacity">MCB Capacity (A)</label>
+              <input id="mcb-capacity" type="number" step="1" placeholder="Ampere" />
             </div>
-            <div style="width:180px">
+            <div>
               <label for="main-voltage">Main Voltage (V)</label>
-              <input id="main-voltage" type="number" step="0.1" placeholder="V" />
+              <input id="main-voltage" type="number" step="0.1" placeholder="Volt" />
             </div>
-            <div style="flex:1">
-              <label for="wire-size">Size & types of Wires</label>
-              <input id="wire-size" type="text" placeholder="e.g. 3x2.5mm2 Cu" />
+            <div>
+              <label for="wire-size">Size & Type of Wire</label>
+              <input id="wire-size" type="text" placeholder="e.g. 3x2.5mm² Cu" />
+            </div>
+            <div>
+              <label for="line-current-input">Measured Line Current (A)</label>
+              <input id="line-current-input" type="number" step="0.01" placeholder="Measured A" />
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:end;margin-bottom:8px">
@@ -156,14 +230,14 @@
             <button id="view-save" class="ghost" onclick="window.location.href='load_balancing_records.html'">View Saved Forms</button>
           </div>
 
-          <h3 style="margin-top:12px">Loads</h3>
-          <div style="max-height:260px;overflow:auto;border-radius:6px">
+          <h3 style="margin:14px 0 6px;font-size:14px;color:#fcd600">Loads</h3>
+          <div style="max-height:280px;overflow:auto;border:1px solid #8eaadb;border-radius:4px">
             <table aria-describedby="loads-count">
-              <thead><tr><th>Load</th><th>A</th><th>Phase</th><th></th></tr></thead>
+              <thead><tr><th>Load Description</th><th>Amps (A)</th><th>Phase</th><th></th></tr></thead>
               <tbody id="lb-body"></tbody>
             </table>
           </div>
-          <div id="loads-count" class="muted" style="margin-top:8px">0 loads</div>
+          <div id="loads-count" class="muted" style="margin-top:6px;color:#fcd600">0 loads</div>
 
         </section>
 
@@ -245,16 +319,41 @@
 
     </div>
 
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-      <input id="panel-board" type="text" placeholder="Panel Board Name" style="width:360px;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
-      <div class="muted" style="font-size:13px">Panel appears on printable form</div>
-    </div>
+    
 
-    <div style="margin-top:10px;display:flex;gap:12px;align-items:center">
-      <label style="width:220px;font-size:13px;">Load Balancing Conducted by:</label>
-      <input id="conducted-by" type="text" placeholder="Electrician name" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
-      <label style="width:220px;font-size:13px;">Witnessed and Verified by:</label>
-      <input id="witness-by" type="text" placeholder="Operation In-charge" style="flex:1;padding:8px;border-radius:6px;border:1px solid #e6e9ee" />
+    <!-- Signature Section -->
+    <div class="signature-section">
+      <h3>Signatories</h3>
+      <div class="sig-grid">
+        <div class="sig-block">
+          <div class="sig-label">Conducted By:</div>
+          <input id="conducted-by" type="text" placeholder="Electrician / Contractor name" />
+          <div class="sig-title">Electrical Contractor</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-label">Witnessed By:</div>
+          <input id="witness-by" type="text" placeholder="Mall Representative / Operation In-charge" />
+          <div class="sig-title">Mall Representative</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-label">Certified By:</div>
+          <input id="certified-by" type="text" placeholder="RME / REE / PEE name" />
+          <div class="sig-title">RME / REE / PEE</div>
+          <div class="sig-sub">
+            <div>PRC REG NO.:</div>
+            <div>Validity:</div>
+            <div>PTR No.:</div>
+            <div>Issued on:</div>
+            <div>Issued at:</div>
+            <div>Tin No.:</div>
+          </div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-label">Witnessed By:</div>
+          <input id="witness-tenant" type="text" placeholder="Tenant Representative name" />
+          <div class="sig-title">Tenant Representative</div>
+        </div>
+      </div>
     </div>
 
     <input id="file-input" type="file" accept="text/csv" style="display:none" />
@@ -268,9 +367,16 @@
         });
 
         async function savePrintableRecord() {
+          // Ask for a filename before saving
+          const fileName = prompt('Enter a file name for this record:', 'LB_' + new Date().toISOString().slice(0,10));
+          if(!fileName || !fileName.trim()) {
+            alert('Save cancelled - a file name is required.');
+            return;
+          }
           // Gather ALL user input fields and loads
           const date = new Date().toLocaleDateString();
           const time = new Date().toLocaleTimeString();
+          const savedAt = new Date().toISOString();
           const refId = 'LB-' + new Date().getFullYear() + String(new Date().getMonth()+1).padStart(2,'0') + String(new Date().getDate()).padStart(2,'0') + '-' + String(new Date().getHours()).padStart(2,'0') + String(new Date().getMinutes()).padStart(2,'0') + String(new Date().getSeconds()).padStart(2,'0');
           const branch = document.getElementById('branch-code')?.value || '';
           const company = document.getElementById('company-name')?.value || '';
@@ -281,6 +387,8 @@
           const wires = document.getElementById('wire-size')?.value || '';
           const conductedBy = document.getElementById('conducted-by')?.value || '';
           const witnessBy = document.getElementById('witness-by')?.value || '';
+          const certifiedBy = document.getElementById('certified-by')?.value || '';
+          const witnessTenant = document.getElementById('witness-tenant')?.value || '';
           const remarks = document.getElementById('remarks-input')?.value || '';
           const circType = document.getElementById('circuit-type')?.value || '';
           const vll = document.getElementById('v-line-line')?.value || '';
@@ -309,7 +417,10 @@
           } catch(e) { loadsArr = []; }
 
           const record = {
-            date, time, refId, branch, company, location, panel, mcb, mainV, wires, conductedBy, witnessBy, remarks, circType, vll, vln, vph,
+            fileName: fileName.trim(), savedAt,
+            date, time, refId, branch, company, location, panel, mcb, mainV, wires,
+            conductedBy, witnessBy, certifiedBy, witnessTenant,
+            remarks, circType, vll, vln, vph,
             nameplate, meas_van, meas_vbn, meas_vcn, meas_ia, meas_ib, meas_ic, pf_a, pf_b, pf_c,
             phaseA, phaseB, phaseC, totalLoad,
             loads: loadsArr
@@ -318,9 +429,24 @@
           try {
             let records = await FirestoreDB.loadRecords(LB_KEY);
             if(!Array.isArray(records)) records = [];
-            records.unshift(record);
-            await FirestoreDB.saveRecords(LB_KEY, records);
-            alert('Printable form saved! You can view it in the records list.');
+            if(isEditMode && editRecordIndex >= 0 && editRecordIndex < records.length) {
+              // Update existing record
+              records[editRecordIndex] = record;
+              await FirestoreDB.saveRecords(LB_KEY, records);
+              alert('Record updated as "' + fileName.trim() + '"!');
+              isEditMode = false;
+              editRecordIndex = -1;
+              // Remove edit param from URL
+              const url = new URL(window.location);
+              url.searchParams.delete('edit');
+              window.history.replaceState({}, '', url);
+              const h2 = document.querySelector('.form-card h2');
+              if(h2) h2.textContent = 'Load Balancing & Full Load Test Form';
+            } else {
+              records.unshift(record);
+              await FirestoreDB.saveRecords(LB_KEY, records);
+              alert('Record saved as "' + fileName.trim() + '"! You can view it in the records list.');
+            }
           } catch(e) {
             alert('Failed to save record: ' + (e?.message||e));
           }
@@ -328,6 +454,9 @@
     // Simple client-side load balancer + full load test
     const STORAGE_KEY = 'epm_load_balancer_form_v1';
     let loads = [];
+    // Edit mode tracking
+    let isEditMode = false;
+    let editRecordIndex = -1;
 
     // DOM refs
     const circuitTypeEl = document.getElementById('circuit-type');
@@ -370,7 +499,67 @@
               if(meta.vln) document.getElementById('v-line-neutral').value = meta.vln;
               if(meta.vph) document.getElementById('v-phase').value = meta.vph;
             }
-      }catch(e){console.warn('Failed to load header meta', e);}    
+      }catch(e){console.warn('Failed to load header meta', e);}
+      // Check for edit mode (coming from records page)
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const editParam = urlParams.get('edit');
+        if(editParam !== null) {
+          const editData = sessionStorage.getItem('lb_edit_record');
+          const editIdx = sessionStorage.getItem('lb_edit_index');
+          if(editData) {
+            const rec = JSON.parse(editData);
+            isEditMode = true;
+            editRecordIndex = parseInt(editIdx, 10) || 0;
+            // Populate header fields
+            if(rec.company) document.getElementById('company-name').value = rec.company;
+            if(rec.location) document.getElementById('location-name').value = rec.location;
+            if(rec.panel) document.getElementById('panel-board').value = rec.panel;
+            if(rec.branch) document.getElementById('branch-code').value = rec.branch;
+            if(rec.mcb) document.getElementById('mcb-capacity').value = rec.mcb;
+            if(rec.mainV) document.getElementById('main-voltage').value = rec.mainV;
+            if(rec.wires) document.getElementById('wire-size').value = rec.wires;
+            if(rec.conductedBy) document.getElementById('conducted-by').value = rec.conductedBy;
+            if(rec.witnessBy) document.getElementById('witness-by').value = rec.witnessBy;
+            if(rec.certifiedBy) document.getElementById('certified-by').value = rec.certifiedBy;
+            if(rec.witnessTenant) document.getElementById('witness-tenant').value = rec.witnessTenant;
+            if(rec.remarks) document.getElementById('remarks-input').value = rec.remarks;
+            // Circuit type & voltage
+            if(rec.circType) {
+              document.getElementById('circuit-type').value = rec.circType;
+              updatePhaseOptions();
+              applyVoltageFieldRules();
+            }
+            if(rec.vll) document.getElementById('v-line-line').value = rec.vll;
+            if(rec.vln) document.getElementById('v-line-neutral').value = rec.vln;
+            if(rec.vph) document.getElementById('v-phase').value = rec.vph;
+            // Full load test fields
+            if(rec.nameplate) document.getElementById('nameplate-power').value = rec.nameplate;
+            if(rec.meas_van) document.getElementById('meas-van').value = rec.meas_van;
+            if(rec.meas_vbn) document.getElementById('meas-vbn').value = rec.meas_vbn;
+            if(rec.meas_vcn) document.getElementById('meas-vcn').value = rec.meas_vcn;
+            if(rec.meas_ia) document.getElementById('meas-ia').value = rec.meas_ia;
+            if(rec.meas_ib) document.getElementById('meas-ib').value = rec.meas_ib;
+            if(rec.meas_ic) document.getElementById('meas-ic').value = rec.meas_ic;
+            if(rec.pf_a) document.getElementById('pf-a').value = rec.pf_a;
+            if(rec.pf_b) document.getElementById('pf-b').value = rec.pf_b;
+            if(rec.pf_c) document.getElementById('pf-c').value = rec.pf_c;
+            // Restore loads array
+            if(rec.loads && Array.isArray(rec.loads)) {
+              loads = rec.loads;
+              saveToStorage();
+              renderLoads();
+              computeSummary();
+            }
+            // Clean up sessionStorage
+            sessionStorage.removeItem('lb_edit_record');
+            sessionStorage.removeItem('lb_edit_index');
+            // Update page title to indicate edit mode
+            const h2 = document.querySelector('.form-card h2');
+            if(h2) h2.textContent = 'Edit Load Balancing Record';
+          }
+        }
+      } catch(e) { console.warn('Edit mode init failed', e); }
     }
 
     function bindCircuitOptions(){ 
@@ -772,7 +961,7 @@
 
       const html = [];
       html.push('<!doctype html><html><head><meta charset="utf-8"><title>Printable Load Balancing Form</title>');
-      html.push('<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px;background:url("'+ bgCssUrl + '") no-repeat center top/cover}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px}th{background:#eee;text-align:center}td.center{text-align:center} .small{font-size:11px}</style>');
+      html.push('<style>@media print{@page{size:landscape;margin:10mm 12mm} #printBtn{display:none!important} html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important} body{border:3px solid #000!important;-webkit-box-decoration-break:clone!important;box-decoration-break:clone!important}}body{font-family:Arial,Helvetica,sans-serif;padding:12px;border:2px solid #000;-webkit-box-decoration-break:clone;box-decoration-break:clone;background:url("'+ bgCssUrl + '") no-repeat center top/cover}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px;font-size:12px;color:#000}th{background:#eee;text-align:center;font-weight:900;color:#000}td.center{text-align:center} .small{font-size:11px}</style>');
       html.push('</head><body>');
       html.push(`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><strong>${escapeHtml(company || '')}</strong><br><span class="small">${escapeHtml(location || '')}</span><br><span class="small"><strong>MAIN CIRCUIT DETAILS</strong></span><br><span class="small">Panel: ${escapeHtml(panel || '')}</span><br><span class="small">Branch: ${escapeHtml(branch || '')}</span><br><span class="small">MCB: ${escapeHtml(String(document.getElementById('mcb-capacity') ? document.getElementById('mcb-capacity').value : '') || '')} A</span><br><span class="small">Main V: ${escapeHtml(String(document.getElementById('main-voltage') ? document.getElementById('main-voltage').value : '') || '')} V</span><br><span class="small">Wires: ${escapeHtml(String(document.getElementById('wire-size') ? document.getElementById('wire-size').value : '') || '')}</span></div><div><strong>${title}</strong><br>Date: ${dateStr}<br>Ref: ${escapeHtml(refId)}</div></div>`);
 
@@ -893,14 +1082,43 @@
 
       html.push('</tbody></table>');
       html.push('<div style="margin-top:8px;font-size:12px">Generated by Load Balancer Tool</div>');
-      // footer with signatures and timestamp (printed values)
+      // footer with all signatories
       const conducted = escapeHtml(document.getElementById('conducted-by') ? document.getElementById('conducted-by').value : '');
       const witness = escapeHtml(document.getElementById('witness-by') ? document.getElementById('witness-by').value : '');
+      const certifiedByVal = escapeHtml(document.getElementById('certified-by') ? document.getElementById('certified-by').value : '');
+      const witnessTenantVal = escapeHtml(document.getElementById('witness-tenant') ? document.getElementById('witness-tenant').value : '');
       const printedAt = new Date().toLocaleString();
-      html.push('<div style="margin-top:18px;display:flex;gap:12px;justify-content:space-between;align-items:flex-start">');
-      html.push(`<div style="flex:1"><strong>Load Balancing Conducted by:</strong><div style="border-bottom:1px solid #000;padding:6px 2px;margin-top:6px">${conducted}</div></div>`);
-      html.push(`<div style="flex:1"><strong>Witnessed and Verified by:</strong><div style="border-bottom:1px solid #000;padding:6px 2px;margin-top:6px">${witness}</div></div>`);
-      html.push(`<div style="flex:0 0 220px"><strong>Date / Time:</strong><div style="padding:6px 2px;margin-top:6px">${escapeHtml(printedAt)}</div></div>`);
+      // Signature section
+      html.push('<div style="margin-top:24px;border-top:2px solid #333;padding-top:16px">');
+      html.push('<div style="font-size:13px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Signatories</div>');
+      html.push('<div style="display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap">');
+      // Conducted By
+      html.push('<div style="flex:1;min-width:180px">');
+      html.push('<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Conducted By</div>');
+      html.push(`<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">${conducted}</div>`);
+      html.push('<div style="font-size:10px;color:#777;margin-top:2px">Electrician / Technician</div>');
+      html.push('</div>');
+      // Witnessed By (Mall Rep)
+      html.push('<div style="flex:1;min-width:180px">');
+      html.push('<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Witnessed &amp; Verified By</div>');
+      html.push(`<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">${witness}</div>`);
+      html.push('<div style="font-size:10px;color:#777;margin-top:2px">Mall Administration Representative</div>');
+      html.push('</div>');
+      // Certified By
+      html.push('<div style="flex:1;min-width:180px">');
+      html.push('<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Certified By</div>');
+      html.push(`<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">${certifiedByVal}</div>`);
+      html.push('<div style="font-size:10px;color:#777;margin-top:2px">Licensed Professional</div>');
+      html.push('</div>');
+      // Witnessed By (Tenant)
+      html.push('<div style="flex:1;min-width:180px">');
+      html.push('<div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Witnessed By</div>');
+      html.push(`<div style="border-bottom:2px solid #000;padding:8px 4px;min-height:22px;font-size:14px;font-weight:600">${witnessTenantVal}</div>`);
+      html.push('<div style="font-size:10px;color:#777;margin-top:2px">Tenant Representative</div>');
+      html.push('</div>');
+      html.push('</div>');
+      // Date/Time row
+      html.push(`<div style="margin-top:12px;text-align:right;font-size:11px;color:#555">Printed: ${escapeHtml(printedAt)}</div>`);
       html.push('</div>');
       // add a Print button instead of auto-print to avoid blocking/freeze in some browsers
       html.push('<div style="margin-top:8px;text-align:right"><button id="printBtn" style="padding:8px 12px;font-size:13px">Print</button></div>');
