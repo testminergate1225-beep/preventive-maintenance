@@ -3,14 +3,14 @@
 // Get these from Firebase Console > Project Settings > Your apps > SDK setup and configuration
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDJOuYk3sUoQkkqX4tH3e8P9Gh1kXBRJ8A",
-  authDomain: "preventive-maintenance-2b1b7.firebaseapp.com",
-  databaseURL: "https://preventive-maintenance-2b1b7-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "preventive-maintenance-2b1b7",
-  storageBucket: "preventive-maintenance-2b1b7.firebasestorage.app",
-  messagingSenderId: "781770447532",
-  appId: "1:781770447532:web:5f90c90bfcde2e2ca51d09",
-  measurementId: "G-P8QLRSSNXY"
+  apiKey: "your_valid_api_key",
+  authDomain: "your_project_domain.firebaseapp.com",
+  databaseURL: "https://your_database_url.firebasedatabase.app",
+  projectId: "your_project_id",
+  storageBucket: "your_bucket",
+  messagingSenderId: "your_messagingsenderID",
+  appId: "your_app_ID",
+  measurementId: "your_m_ID"
 };
 
 // Initialize Firebase
